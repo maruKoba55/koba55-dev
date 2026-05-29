@@ -1,0 +1,48 @@
+import { supabaseServer } from '@/lib/Server';
+import ListBook from '@/app/MyBooks/list_book';
+import { dbSearchMax } from '@/app/constants';
+
+type PageProps = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export default async function ViewBookPage({ searchParams }: PageProps) {
+  const supabase = await supabaseServer();
+  const params = await searchParams;
+  const { data: idListData, error } = await supabase.rpc('search_books_unread', {
+    p_isbn13: (params.isbn13 as string) || null,
+    p_title: (params.title as string) || null,
+    p_title_search_type: (params.title_search_type as string) || 'top',
+    p_publisher: (params.publisher as string) || null,
+    p_publish_series: (params.publish_series as string) || null,
+    p_role_cd: (params.role_cd as string) || null,
+    p_person_name: (params.person_name as string) || null,
+    p_person_search_type: (params.person_search_type as string) || 'top',
+    p_booktype_cd: (params.booktype_cd as string) || null,
+    p_limit_comic: (params.limit_comic as string) || 'noLimit',
+    p_display_order: (params.display_order as string) || 'publish',
+    p_select_limit: (dbSearchMax as number) || 9999
+  });
+  if (error) {
+    console.error(error);
+    return (
+      <div>
+        データ取得失敗 error.code={error.code} :{error.message}
+      </div>
+    );
+  }
+  // book_id 配列 (例: [10001, 10005, ...])
+  const bookIdList = idListData?.map((item: any) => item.book_id) || [];
+
+  // build時のエラー避けのため、booktype_cd、limit_comicが undefined、string[]となる可能性を排除
+  return (
+    <div>
+      <ListBook
+        titleAdd="未読"
+        booktype_cd={Array.isArray(params.booktype_cd) ? params.booktype_cd[0] : (params.booktype_cd ?? '')}
+        limit_comic={Array.isArray(params.limit_comic) ? params.limit_comic[0] : (params.limit_comic ?? '')}
+        bookIdList={bookIdList}
+      />
+    </div>
+  );
+}

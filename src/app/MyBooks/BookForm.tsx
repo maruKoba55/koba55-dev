@@ -1,0 +1,342 @@
+import React from 'react';
+import { Eraser } from 'lucide-react';
+import { isbnHyphen10 } from '@/utils/isbnHyphen10';
+import { isbnHyphenate } from '@/utils/isbnHyphenate';
+import { toWarekiYear } from '@/utils/toWarekiYear';
+import { styleItems } from '@/app/constants';
+
+export type BookFormData = {
+  isbn10: string;
+  isbn13: string;
+  c_cd: string;
+  ndc: string;
+  title: string;
+  original_title: string;
+  colophon: string;
+  publisher: string;
+  publish_series: string;
+  publish_series_no: string;
+  first_publish_year: number;
+  remarks: string;
+  comic_f: boolean;
+  image_url: string;
+};
+
+type Props = {
+  screenTitle: string; // 画面の見出し
+  bookId: string; // 表示対象の書籍ID
+  formData: BookFormData;
+  isReadOnly?: boolean; // 表示専用モード
+  totalCount?: number; // 総件数
+  currentCount?: number; // 現在件数
+  onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onChangeF?: (id: any, value: any) => void; // 関数を介する項目用（ISBN等）
+  onClearField?: (field: keyof BookFormData) => void; //入力内容消去ボタン用
+  extraFields?: React.ReactNode; // 追加表示項目
+  buttons?: React.ReactNode; // ボタンエリア
+};
+
+export const BookForm = ({
+  screenTitle,
+  bookId,
+  formData,
+  isReadOnly = false,
+  totalCount = 0,
+  currentCount = 0,
+  onChange,
+  onChangeF,
+  onClearField,
+  extraFields,
+  buttons
+}: Props) => {
+  const screenMinW = 1100; //画面最小幅
+  return (
+    <div style={{ minWidth: `${screenMinW}px` }} className="w-full">
+      <div style={{ width: `${screenMinW + 8}px` }} className="text-center text-3xl font-bold underline bg-cyan-500">
+        {screenTitle}
+      </div>
+      <div style={{ width: `${screenMinW - 8}px` }}>
+        <div id="mainFraim" className="flex border-solid border-2 rounded-lg m-2 p-2">
+          {/* 左側：入力フォーム */}
+          <div className="flex-1">
+            <div className="flex items-center">
+              <div className="text-xl font-bold text-blue-500 m-1">基本情報</div>
+              <div className="text-gray-500 ml-1">{bookId ? `（書籍ID：${bookId}）` : ''}</div>
+            </div>
+            {isReadOnly ? null : (
+              <div className="ml-6">
+                （<span className="font-bold text-orange-500">オレンジ色</span>項目は空白不可）
+              </div>
+            )}
+            <div className="flex mt-1">
+              <div className="flex items-center">
+                <label htmlFor="isbn10" className="inline-block w-15">
+                  ISBN-10
+                </label>
+                <input
+                  id="isbn10"
+                  className={styleItems}
+                  type="text"
+                  size={12}
+                  maxLength={13}
+                  readOnly={isReadOnly}
+                  value={isbnHyphen10(formData.isbn10) ?? formData.isbn10 ?? ''}
+                  onChange={onChange}
+                  onBlur={(e) => {
+                    const formatted = isbnHyphen10(formData.isbn10);
+                    if (formatted && onChangeF) {
+                      onChangeF('isbn10', formatted);
+                    }
+                  }}
+                />
+                {formData.isbn10 && !isbnHyphen10(formData.isbn10) ? <div className="text-red-500 ml-1">?</div> : null}
+              </div>
+              <div className="flex items-center ml-4">
+                <label htmlFor="isbn13">ISBN-13</label>
+                <input
+                  id="isbn13"
+                  className={styleItems}
+                  type="text"
+                  size={16}
+                  maxLength={17}
+                  readOnly={isReadOnly}
+                  value={isbnHyphenate(formData.isbn13) ?? formData.isbn13 ?? ''}
+                  onChange={onChange}
+                  onBlur={(e) => {
+                    const formatted = isbnHyphenate(formData.isbn13);
+                    if (formatted && onChangeF) {
+                      onChangeF('isbn13', formatted);
+                    }
+                  }}
+                />
+                {formData.isbn13 && !isbnHyphenate(formData.isbn13) ? <div className="text-red-500 ml-1">?</div> : null}
+              </div>
+              <div className="ml-4">
+                <label htmlFor="c_cd">Cコード</label>
+                <input
+                  id="c_cd"
+                  className={styleItems}
+                  type="text"
+                  size={4}
+                  maxLength={5}
+                  readOnly={isReadOnly}
+                  value={formData.c_cd}
+                  onChange={onChange}
+                />
+              </div>
+              <div className="ml-4">
+                <label htmlFor="ndc">十進分類</label>
+                <input
+                  id="ndc"
+                  className={styleItems}
+                  type="text"
+                  size={9}
+                  maxLength={10}
+                  readOnly={isReadOnly}
+                  value={formData.ndc}
+                  onChange={onChange}
+                />
+              </div>
+            </div>
+            <div className="mt-1">
+              <label htmlFor="title" className={`inline-block w-15 ${isReadOnly ? '' : 'font-bold text-orange-500'}`}>
+                題　名
+              </label>
+              <input
+                id="title"
+                className={styleItems}
+                type="text"
+                required
+                size={94}
+                readOnly={isReadOnly}
+                value={formData.title}
+                onChange={onChange}
+              />
+            </div>
+            <div className="mt-1">
+              <label htmlFor="original_title" className="inline-block w-15">
+                原題名
+              </label>
+              <input
+                id="original_title"
+                className={styleItems}
+                type="text"
+                size={94}
+                readOnly={isReadOnly}
+                value={formData.original_title}
+                onChange={onChange}
+              />
+            </div>
+            <div className="flex mt-1">
+              <div>
+                <label htmlFor="colophon" className="inline-block w-15 align-top">
+                  奥　付
+                </label>
+                <textarea
+                  id="colophon"
+                  className={styleItems}
+                  cols={80}
+                  rows={4}
+                  readOnly={isReadOnly}
+                  value={formData.colophon}
+                  onChange={onChange}
+                ></textarea>
+              </div>
+              <div className="align-top ml-2">
+                {!isReadOnly ? (
+                  <button
+                    type="button"
+                    className="py-2 px-3 text-base rounded-md font-semibold bg-blue-300"
+                    onClick={() => onClearField?.('colophon')}
+                  >
+                    <Eraser size={14} />
+                    奥付消去
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            <div className="flex items-center">
+              <label
+                htmlFor="publisher"
+                className={`inline-block w-15 ${isReadOnly ? '' : 'font-bold text-orange-500'}`}
+              >
+                出版社
+              </label>
+              <input
+                id="publisher"
+                className={styleItems}
+                type="text"
+                required
+                size={24}
+                readOnly={isReadOnly}
+                value={formData.publisher}
+                onChange={onChange}
+              />
+              <div className="ml-1">※不詳の場合はカッコで括り、（不明）（自費出版）等</div>
+            </div>
+            <div className="flex mt-1 ml-17">
+              <div>
+                <label htmlFor="publish_series">出版シリーズ</label>
+                <input
+                  id="publish_series"
+                  className={styleItems}
+                  type="text"
+                  size={26}
+                  readOnly={isReadOnly}
+                  value={formData.publish_series}
+                  onChange={onChange}
+                />
+              </div>
+              <div>
+                <label htmlFor="publish_series_no" className="ml-4">
+                  シリーズ番号
+                </label>
+                <input
+                  id="publish_series_no"
+                  className={styleItems}
+                  type="text"
+                  size={8}
+                  readOnly={isReadOnly}
+                  value={formData.publish_series_no}
+                  onChange={onChange}
+                />
+              </div>
+            </div>
+            <div className="flex items-center mt-1">
+              <label
+                htmlFor="first_publish_year"
+                className={`inline-block w-15 ${isReadOnly ? '' : 'font-bold text-orange-500'}`}
+              >
+                初版年
+              </label>
+              <input
+                id="first_publish_year"
+                className={styleItems}
+                type="number"
+                required
+                size={4}
+                min={0}
+                max={9999}
+                readOnly={isReadOnly}
+                value={formData.first_publish_year}
+                onChange={onChange}
+              />
+              {toWarekiYear(parseInt(String(formData.first_publish_year))) //nullでない＝和暦変換成功
+                ? formData.first_publish_year && (
+                    <span>（{toWarekiYear(parseInt(String(formData.first_publish_year)) || 0)}）</span>
+                  )
+                : null}
+              <div className="ml-1">※不詳の場合は 0（zero）</div>
+            </div>
+            <div className="mt-1">
+              <label htmlFor="remarks" className="inline-block w-15 align-top">
+                備　考
+              </label>
+              <textarea
+                id="remarks"
+                className={styleItems}
+                cols={80}
+                rows={2}
+                readOnly={isReadOnly}
+                value={formData.remarks}
+                onChange={onChange}
+              ></textarea>
+            </div>
+          </div>
+
+          {/* 右側：画像表示エリア */}
+          <div className="w-[200px] flex flex-col p-1">
+            <div className="ml-auto">{totalCount > 0 ? `( ${currentCount} / ${totalCount} )` : ''}</div>
+            <div className="w-[170px] h-full flex items-center justify-center mb-2">
+              {formData.image_url ? (
+                <img
+                  src={formData.image_url}
+                  alt="Book Cover"
+                  width={170}
+                  height={200}
+                  className="object-contain"
+                  onError={(e) => {
+                    e.currentTarget.src = '/images/book_unavailable.jpg';
+                  }}
+                />
+              ) : (
+                <img src="/images/book_NoImage.jpg" alt="No Image" width={170} height={200} />
+              )}
+            </div>
+            <div className="w-full flex flex-col">
+              <textarea
+                id="image_url"
+                className={`${styleItems} w-full resize-none`}
+                cols={20}
+                rows={1}
+                readOnly={isReadOnly}
+                value={formData.image_url}
+                onChange={onChange}
+              ></textarea>
+              <label htmlFor="image_url" className="text-sm font-medium text-gray-700 flex justify-end mb-1">
+                （書影URL）
+              </label>
+            </div>
+            <div className="flex mt-6 justify-end">
+              <label htmlFor="comic_f">コミック</label>
+              <input
+                id="comic_f"
+                className="ml-2"
+                type="checkbox"
+                readOnly={isReadOnly}
+                checked={formData.comic_f}
+                onChange={onChange}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 付加情報エリア */}
+        <div className="flex m-2">{extraFields}</div>
+
+        {/* ボタンエリア */}
+        <div className="flex m-2 justify-around">{buttons}</div>
+      </div>
+    </div>
+  );
+};
