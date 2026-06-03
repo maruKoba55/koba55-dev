@@ -7,9 +7,7 @@ import { supabaseClient } from '@/lib/Client';
 import { Pencil, Save, X, Plus, Trash2 } from 'lucide-react';
 import { CommonButton } from '@/components/ui/button';
 import { AddNoteModal } from '@/app/MyBooks/AddNoteModal';
-import { dbSearchMax } from '@/app/constants';
-
-const screenMinW = 800;
+import { useSystemConstant } from '@/context/ConstantsContext';
 
 type BookNote = {
   id: number;
@@ -32,9 +30,12 @@ export default function ListNoteBook() {
   const [editForm, setEditForm] = useState<Partial<BookNote>>({});
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+  // システム変数取得（カスタムフック）
+  const sqlLimit = (useSystemConstant('sqlLimit') as number) ?? 0;
+
   // データ取得
   let query = supabase.from('book_note').select('*').eq('book_id', bookId).order('read_st_date', { ascending: true });
-  if (dbSearchMax) query = query.limit(dbSearchMax);
+  if (sqlLimit) query = query.limit(sqlLimit);
   const fetchNotes = async () => {
     const { data, error } = await query;
     if (error) console.error(error);
@@ -97,6 +98,8 @@ export default function ListNoteBook() {
     event.preventDefault(); // ブラウザのデフォルト挙動を防止
     handleClose();
   });
+
+  const screenMinW = 800;
 
   return (
     <div style={{ minWidth: `${screenMinW}px` }} className="w-full">

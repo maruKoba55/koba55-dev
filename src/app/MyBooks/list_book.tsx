@@ -6,10 +6,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabaseClient } from '@/lib/Client';
 import { X } from 'lucide-react';
 import { CommonButton } from '@/components/ui/button';
+import { useSystemConstant } from '@/context/ConstantsContext';
 import { isbnHyphen10 } from '@/utils/isbnHyphen10';
 import { isbnHyphenate } from '@/utils/isbnHyphenate';
-
-const screenMinW = 1060; //画面最小幅
 
 export default function ListBook({
   titleAdd,
@@ -26,6 +25,9 @@ export default function ListBook({
   const router = useRouter();
   const [books, setBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true); // 読み込み状態を管理
+
+  // システム変数取得（カスタムフック）
+  const listAlert = (useSystemConstant('listAlert') as number) ?? 0;
 
   // 各ボタンの処理（ホットキー設定は return ,if文より前に書かないとエラー？）
   //［閉じる］
@@ -44,7 +46,7 @@ export default function ListBook({
       window.close();
       return;
     }
-    if (bookIdList.length > 100) {
+    if (listAlert > 0 && bookIdList.length > listAlert) {
       const confirmed = window.confirm(`該当データ${bookIdList.length}件。時間のかかる場合がありますが続けますか？`);
       if (!confirmed) {
         window.close();
@@ -138,6 +140,8 @@ export default function ListBook({
 
   if (loading) return <div>読み込み中...</div>;
   if (books.length === 0) return <div>該当書籍無し</div>;
+
+  const screenMinW = 1060; //画面最小幅
 
   return (
     <div style={{ minWidth: `${screenMinW}px` }} className="space-y-4">

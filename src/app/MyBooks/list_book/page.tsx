@@ -1,6 +1,5 @@
 import { supabaseServer } from '@/lib/Server';
 import ListBook from '@/app/MyBooks/list_book';
-import { dbSearchMax } from '@/app/constants';
 
 type PageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -23,7 +22,7 @@ export default async function ListBookPage({ searchParams }: PageProps) {
     p_limit_comic: (params.limit_comic as string) || 'noLimit',
     p_limit_possess: (params.limit_possess as string) || 'noLimit',
     p_display_order: (params.display_order as string) || 'publish',
-    p_select_limit: (dbSearchMax as number) || 9999
+    p_select_limit: (params.sqlLimit as string) || '0'
   });
   if (error) {
     console.error(error);

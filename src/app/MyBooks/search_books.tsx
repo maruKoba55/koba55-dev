@@ -6,9 +6,9 @@ import { supabaseClient } from '@/lib/Client';
 import { BookCopy, BookSearch, CalendarSearch, Eraser, LogIn, LogOut, Plus, TextSearch, Toolbox } from 'lucide-react';
 import { EditProfile } from '@/components/editProfile';
 import { CommonButton } from '@/components/ui/button';
+import { useSystemConstant } from '@/context/ConstantsContext';
 import { isbnHyphenate } from '@/utils/isbnHyphenate';
 import { styleItems } from '@/app/constants';
-import { dbSearchMax } from '@/app/constants';
 
 const initialFormState = {
   isbn13: '',
@@ -48,6 +48,7 @@ export function SearchBooks() {
   const [bookTypes, setBookTypes] = useState<BookTypeMaster[]>([]);
   const [roles, setRoles] = useState<BookRoleMaster[]>([]);
 
+  // ユーザー取得
   const [user, setUser] = useState<string | null>(null);
   useEffect(() => {
     const fetchUser = async () => {
@@ -56,6 +57,15 @@ export function SearchBooks() {
     };
     fetchUser();
   }, []);
+
+  // システム変数取得（カスタムフック）
+  const sqlLimit = parseInt(useSystemConstant('sqlLimit') as string) || 0;
+  const supabaseMaxRows = parseInt(useSystemConstant('supabaseMaxRows') as string) || 0;
+  if (supabaseMaxRows === 0) {
+    alert(`システム定数（Table'system_constants'）不正。supabaseMaxRowsを確認してください。`);
+    return null;
+  }
+  const dbSearchMax = sqlLimit === 0 || sqlLimit > supabaseMaxRows ? supabaseMaxRows : sqlLimit;
 
   // 書籍検索条件の組合せチェック
   const SearchChk = (formData: any) => {
@@ -87,6 +97,7 @@ export function SearchBooks() {
       limit_comic: formData.limitComic || '',
       limit_possess: formData.limitPossess || '',
       display_order: formData.bookOrder || '',
+      sqlLimit: sqlLimit.toString() || '0',
       user: user || ''
     });
     window.open(`/MyBooks/view_book?${params.toString()}`, '_blank', 'width=1110,height=880');
@@ -106,7 +117,8 @@ export function SearchBooks() {
       booktype_cd: formData.booktype_cd || '',
       limit_comic: formData.limitComic || '',
       limit_possess: formData.limitPossess || '',
-      display_order: formData.bookOrder || ''
+      display_order: formData.bookOrder || '',
+      sqlLimit: sqlLimit.toString() || '0'
     });
     window.open(`/MyBooks/list_book?${params.toString()}`, '_blank', 'width=1080,height=600');
   };
@@ -153,7 +165,8 @@ export function SearchBooks() {
       person_search_type: formData.personSearch,
       booktype_cd: formData.booktype_cd || '',
       limit_comic: formData.limitComic || '',
-      display_order: formData.bookOrder || ''
+      display_order: formData.bookOrder || '',
+      sqlLimit: sqlLimit.toString() || '0'
     });
     window.open(`/MyBooks/list_book_unread?${params.toString()}`, '_blank', 'width=1080,height=600');
   };
@@ -659,17 +672,10 @@ export function SearchBooks() {
         {/* 右側エリア */}
         <div className="flex flex-col w-1/5 flex-1">
           {/* 右側上段：検索件数制限 */}
-          <div className="border-solid border-2 rounded-lg h-1/8 mt-3 mr-1 p-2 flex items-center justify-center">
-            <div>
-              {dbSearchMax ? (
-                <div>
-                  <div className="font-bold text-red-500">データ検索件数制限中！</div>
-                  <div className="text-center">最大{dbSearchMax}件</div>
-                </div>
-              ) : (
-                <div className="font-bold">データ検索件数 制限なし</div>
-              )}
-            </div>
+          <div className="flex flex-col border-solid border-2 rounded-lg h-1/8 mt-3 mr-1 p-2 flex items-center justify-center">
+            <div className="text-lg font-bold text-red-500">データ検索件数制限</div>
+            <div>最大{dbSearchMax}件</div>
+            {sqlLimit === 0 || sqlLimit > supabaseMaxRows ? <div>（supabaseによる）</div> : ''}
           </div>
           {/* 右側中段：ボタンエリア */}
           <div className="flex flex-col border-solid border-2 rounded-lg h-4/8 justify-around mt-3 mr-1 p-1">

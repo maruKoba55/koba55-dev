@@ -6,9 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { supabaseClient } from '@/lib/Client';
 import { X } from 'lucide-react';
 import { CommonButton } from '@/components/ui/button';
-import { dbSearchMax } from '@/app/constants';
-
-const screenMinW = 800;
+import { useSystemConstant } from '@/context/ConstantsContext';
 
 type RangeNote = {
   note_id: number;
@@ -82,6 +80,11 @@ export default function ListNoteRange() {
     }
   }
 
+  // システム変数取得（カスタムフック）
+  const sqlLimit = parseInt(useSystemConstant('sqlLimit') as string) || 0;
+  const supabaseMaxRows = parseInt(useSystemConstant('supabaseMaxRows') as string) || 0;
+  const listAlert = parseInt(useSystemConstant('listAlert') as string) || 0;
+
   // データ取得
   let dateFrom = '0001-01-01'; // 日付最小値
   let dateTo = '9999-12-31'; // 日付最大値
@@ -90,6 +93,7 @@ export default function ListNoteRange() {
   let dateTmp = new Date(dateTo); //to日付を画面指定の1日後として、lt（より前）で検索する
   dateTmp.setDate(dateTmp.getDate() + 1);
   dateTo = `${dateTmp.getFullYear()}-${dateTmp.getMonth() + 1}-${dateTmp.getDate()}`;
+  const dbSearchMax = sqlLimit === 0 || sqlLimit > supabaseMaxRows ? supabaseMaxRows : sqlLimit;
   const fetchNotes = async () => {
     const { data, error } = await supabase.rpc('search_note_range', {
       p_read_st_from: dateFrom as string,
@@ -108,11 +112,20 @@ export default function ListNoteRange() {
     });
     if (error) console.error(error);
     else {
-      setNotes(data || []);
-      if (!data[0]) {
+      const notesList = data || [];
+      setNotes(notesList);
+      if (notesList.length === 0) {
         alert('該当データがありません');
         window.close();
         return;
+      } else {
+        if (listAlert > 0 && notesList.length > listAlert) {
+          const confirmed = window.confirm(`該当データ${notesList.length}件。時間のかかる場合がありますが続けますか？`);
+          if (!confirmed) {
+            window.close();
+            return;
+          }
+        }
       }
     }
   };
@@ -129,6 +142,8 @@ export default function ListNoteRange() {
     event.preventDefault(); // ブラウザのデフォルト挙動を防止
     handleClose();
   });
+
+  const screenMinW = 800;
 
   return (
     <div style={{ minWidth: `${screenMinW}px` }} className="w-full">

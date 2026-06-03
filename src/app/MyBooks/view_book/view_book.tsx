@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabaseClient } from '@/lib/Client';
 import { Notebook, Pencil, RefreshCw, StepBack, StepForward, Trash2, X } from 'lucide-react';
 import { CommonButton } from '@/components/ui/button';
+import { useSystemConstant } from '@/context/ConstantsContext';
 import { BookForm } from '@/app/MyBooks/BookForm';
 
 export default function ViewBook({ bookIdList }: { bookIdList: number[] }) {
@@ -22,6 +23,9 @@ export default function ViewBook({ bookIdList }: { bookIdList: number[] }) {
   const isPrevDisabled = currentIndex <= 0;
   const isNextDisabled = currentIndex >= bookIds.length - 1;
   const readOnly_f = true;
+
+  // システム変数取得（カスタムフック）
+  const viewAlert = (useSystemConstant('viewAlert') as number) ?? 0;
 
   // 各ボタンの処理（ホットキー設定は return ,if文より前に書かないとエラー？）
   //［前］
@@ -145,7 +149,7 @@ export default function ViewBook({ bookIdList }: { bookIdList: number[] }) {
       window.close();
       return;
     }
-    if (bookIdList.length > 50) {
+    if (viewAlert > 0 && bookIdList.length > viewAlert) {
       const confirmed = window.confirm(`該当データ${bookIdList.length}件。時間のかかる場合がありますが続けますか？`);
       if (!confirmed) {
         window.close();
