@@ -4,15 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { supabaseClient } from '@/lib/Client';
 import { Save, X } from 'lucide-react';
 import { CommonButton } from '@/components/ui/button';
+import { useBookTypeMaster } from '@/context/AppContext';
 import { styleItems } from '@/app/constants';
 import Image from 'next/image';
-
-type BookTypeMaster = {
-  booktype_cd: string;
-  booktype: string;
-  selectable: boolean;
-  user_id: string;
-};
 
 // 本日日付（ローカル）
 const todayLocal = [
@@ -38,7 +32,7 @@ export function AddPossessModal({
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     booktype_cd: '',
-    get_date: '',
+    get_date: todayLocal,
     dispose_date: '',
     remarks: '',
     image_url: '',
@@ -53,6 +47,9 @@ export function AddPossessModal({
     image_url: formData.image_url,
     user_id: user
   };
+
+  // マスタ取得（カスタムフック）
+  const bookTypeMaster = useBookTypeMaster();
 
   // 画面マウント時のフォーカス用(書籍種別セレクトに当てるため、HTMLSelectElement)
   const firstInputRef = useRef<HTMLSelectElement>(null);
@@ -106,8 +103,8 @@ export function AddPossessModal({
     setPreviewUrl(`/api/proxy?url=${encodeURIComponent(formData.image_url.trim())}`);
   };
 
-  // 汎用的な入力変更ハンドラ
-  // チェックボックスの場合はchecked、それ以外はvalueを格納
+  // 入力変更ハンドラ
+  // 汎用；チェックボックスの場合はchecked、それ以外はvalueを格納
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
@@ -116,34 +113,18 @@ export function AddPossessModal({
       [id]: type === 'checkbox' ? checked : value
     }));
   };
-
-  // 書影URLを Table 'books' に反映
-  const updateBookImageUrl = async () => {
-    const { error } = await supabase.from('books').update({ image_url: formData.image_url }).eq('book_id', bookId);
-    if (error) throw error;
-  };
-
-  // 書籍種別マスターの展開・取得
-  const [bookTypes, setBookTypes] = useState<BookTypeMaster[]>([]);
-  useEffect(() => {
-    const fetchBookTypes = async () => {
-      const { data, error } = await supabase
-        .from('booktype_master')
-        .select('*')
-        .order('booktype_cd', { ascending: true });
-      if (error) {
-        console.error('Error fetching book types:', error);
-      } else {
-        setBookTypes(data || []);
-      }
-    };
-    fetchBookTypes();
-  }, []);
+  // 書籍種別マスタ select用
   const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFormData({
       ...formData,
       booktype_cd: e.target.value // ここでbooktype_cdが取得される
     });
+  };
+
+  // 書影URLを Table 'books' に反映
+  const updateBookImageUrl = async () => {
+    const { error } = await supabase.from('books').update({ image_url: formData.image_url }).eq('book_id', bookId);
+    if (error) throw error;
   };
 
   return (
@@ -170,7 +151,7 @@ export function AddPossessModal({
                 onChange={handleSelect}
               >
                 <option value="">選択してください</option>
-                {bookTypes.map((item) =>
+                {bookTypeMaster.map((item: any) =>
                   item.selectable ? (
                     <option key={item.booktype_cd} value={item.booktype_cd}>
                       {item.booktype}

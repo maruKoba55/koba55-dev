@@ -5,9 +5,10 @@ type PageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export default async function ViewBookPage({ searchParams }: PageProps) {
+export default async function ListBookPage({ searchParams }: PageProps) {
   const supabase = await supabaseServer();
   const params = await searchParams;
+
   const { data: idListData, error } = await supabase.rpc('search_books_unread', {
     p_isbn13: (params.isbn13 as string) || null,
     p_title: (params.title as string) || null,
@@ -17,8 +18,8 @@ export default async function ViewBookPage({ searchParams }: PageProps) {
     p_role_cd: (params.role_cd as string) || null,
     p_person_name: (params.person_name as string) || null,
     p_person_search_type: (params.person_search_type as string) || 'top',
+    p_bookclass_cd: (params.bookclass_cd as string) || null,
     p_booktype_cd: (params.booktype_cd as string) || null,
-    p_limit_comic: (params.limit_comic as string) || 'noLimit',
     p_display_order: (params.display_order as string) || 'publish',
     p_select_limit: (params.sqlLimit as string) || '0'
   });
@@ -26,20 +27,20 @@ export default async function ViewBookPage({ searchParams }: PageProps) {
     console.error(error);
     return (
       <div>
-        データ取得失敗 error.code={error.code} :{error.message}
+        未読一覧 データ取得失敗 error.code={error.code} :{error.message}
       </div>
     );
   }
   // book_id 配列 (例: [10001, 10005, ...])
   const bookIdList = idListData?.map((item: any) => item.book_id) || [];
 
-  // build時のエラー避けのため、booktype_cd、limit_comicが undefined、string[]となる可能性を排除
+  // build時のエラー避けのため、bookclass_cd、booktype_cdが undefined、string[]となる可能性を排除
   return (
     <div>
       <ListBook
         titleAdd="未読"
+        bookclass_cd={Array.isArray(params.bookclass_cd) ? params.bookclass_cd[0] : (params.bookclass_cd ?? '')}
         booktype_cd={Array.isArray(params.booktype_cd) ? params.booktype_cd[0] : (params.booktype_cd ?? '')}
-        limit_comic={Array.isArray(params.limit_comic) ? params.limit_comic[0] : (params.limit_comic ?? '')}
         bookIdList={bookIdList}
       />
     </div>

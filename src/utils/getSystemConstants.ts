@@ -2,9 +2,14 @@
  * @param 特定の定数名（constant_name）、すべて取得する場合は 'all' または省略
  */
 import { supabaseServer } from '@/lib/Server';
-import { SystemConstant } from '@/context/ConstantsContext';
 
-export async function getConstantsServer(constantName: string | 'all' = 'all'): Promise<SystemConstant[] | null> {
+export interface SystemConstant {
+  constant_name: string;
+  constant_type: string;
+  constant_value: string;
+}
+
+export async function getSystemConstants(constantName: string | 'all' = 'all'): Promise<SystemConstant[] | null> {
   const supabase = await supabaseServer();
   let query = supabase.from('system_constants').select('constant_name, constant_type, constant_value');
   if (constantName !== 'all') {

@@ -6,7 +6,7 @@ import { supabaseClient } from '@/lib/Client';
 import { BookCopy, BookSearch, CalendarSearch, Eraser, LogIn, LogOut, Plus, TextSearch, Toolbox } from 'lucide-react';
 import { EditProfile } from '@/components/editProfile';
 import { CommonButton } from '@/components/ui/button';
-import { useSystemConstant } from '@/context/ConstantsContext';
+import { useSystemConstant, useBookRoleMaster, useBookClassMaster, useBookTypeMaster } from '@/context/AppContext';
 import { isbnHyphenate } from '@/utils/isbnHyphenate';
 import { styleItems } from '@/app/constants';
 
@@ -19,34 +19,17 @@ const initialFormState = {
   role_cd: '',
   person_name: '',
   personSearch: 'top',
+  bookclass_cd: '',
   booktype_cd: '',
-  limitComic: 'noLimit',
-  limitNote: 'noLimit',
   limitPossess: 'noLimit',
   bookOrder: 'publish',
   read_st_from: '',
   read_st_to: ''
 };
 
-type BookTypeMaster = {
-  booktype_cd: string;
-  booktype: string;
-  selectable: boolean;
-  user_id: string;
-};
-
-type BookRoleMaster = {
-  role_cd: string;
-  role_name: string;
-  selectable: boolean;
-  user_id: string;
-};
-
 export function SearchBooks() {
   const supabase = supabaseClient();
   const [formData, setFormData] = useState(initialFormState);
-  const [bookTypes, setBookTypes] = useState<BookTypeMaster[]>([]);
-  const [roles, setRoles] = useState<BookRoleMaster[]>([]);
 
   // ユーザー取得
   const [user, setUser] = useState<string | null>(null);
@@ -58,9 +41,14 @@ export function SearchBooks() {
     fetchUser();
   }, []);
 
-  // システム変数取得（カスタムフック）
+  // システム変数、各種マスタ取得（カスタムフック）
   const sqlLimit = parseInt(useSystemConstant('sqlLimit') as string) || 0;
   const supabaseMaxRows = parseInt(useSystemConstant('supabaseMaxRows') as string) || 0;
+  const bookRoleMaster = useBookRoleMaster();
+  const bookClassMaster = useBookClassMaster();
+  const bookTypeMaster = useBookTypeMaster();
+
+  //検索件数上限の設定
   if (supabaseMaxRows === 0) {
     alert(`システム定数（Table'system_constants'）不正。supabaseMaxRowsを確認してください。`);
     return null;
@@ -80,7 +68,7 @@ export function SearchBooks() {
     return true;
   };
 
-  // 各ボタンの処理（ホットキー設定は return ,if文より前に書かないとエラー？）
+  // 各ボタンの処理
   // ［書籍検索（個別）］
   const handleBookSearch = async () => {
     if (!SearchChk(formData)) return;
@@ -93,8 +81,8 @@ export function SearchBooks() {
       role_cd: formData.role_cd || '',
       person_name: formData.person_name || '',
       person_search_type: formData.personSearch,
+      bookclass_cd: formData.bookclass_cd || '',
       booktype_cd: formData.booktype_cd || '',
-      limit_comic: formData.limitComic || '',
       limit_possess: formData.limitPossess || '',
       display_order: formData.bookOrder || '',
       sqlLimit: sqlLimit.toString() || '0',
@@ -114,8 +102,8 @@ export function SearchBooks() {
       role_cd: formData.role_cd || '',
       person_name: formData.person_name || '',
       person_search_type: formData.personSearch,
+      bookclass_cd: formData.bookclass_cd || '',
       booktype_cd: formData.booktype_cd || '',
-      limit_comic: formData.limitComic || '',
       limit_possess: formData.limitPossess || '',
       display_order: formData.bookOrder || '',
       sqlLimit: sqlLimit.toString() || '0'
@@ -145,8 +133,8 @@ export function SearchBooks() {
       role_cd: formData.role_cd || '',
       person_name: formData.person_name || '',
       person_search_type: formData.personSearch,
-      booktype_cd: formData.booktype_cd || '',
-      limit_comic: formData.limitComic || ''
+      bookclass_cd: formData.bookclass_cd || '',
+      booktype_cd: formData.booktype_cd || ''
     });
     window.open(`/MyBooks/list_note_range?${params.toString()}`, '_blank', 'width=840,height=600');
   };
@@ -163,8 +151,8 @@ export function SearchBooks() {
       role_cd: formData.role_cd || '',
       person_name: formData.person_name || '',
       person_search_type: formData.personSearch,
+      bookclass_cd: formData.bookclass_cd || '',
       booktype_cd: formData.booktype_cd || '',
-      limit_comic: formData.limitComic || '',
       display_order: formData.bookOrder || '',
       sqlLimit: sqlLimit.toString() || '0'
     });
@@ -186,7 +174,7 @@ export function SearchBooks() {
     null;
   };
   useHotkeys('alt+m', (event) => {
-    event.preventDefault(); // ブラウザのデフォルト挙動を防止
+    event.preventDefault();
     handleAssistMaint();
   });
   // ［閉じる］
@@ -194,7 +182,7 @@ export function SearchBooks() {
     window.close();
   };
   useHotkeys('alt+c', (event) => {
-    event.preventDefault(); // ブラウザのデフォルト挙動を防止
+    event.preventDefault();
     handleClose();
   });
   // ［ログアウト］
@@ -203,11 +191,12 @@ export function SearchBooks() {
     window.location.href = '/'; // トップに戻して再認証を促す
   };
   useHotkeys('alt+o', (event) => {
-    event.preventDefault(); // ブラウザのデフォルト挙動を防止
+    event.preventDefault();
     handleLogout();
   });
 
-  // 入力変更ハンドラ；一般用
+  // 入力変更ハンドラ
+  // 汎用；チェックボックスの場合はchecked、それ以外はvalueを格納
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
@@ -216,7 +205,7 @@ export function SearchBooks() {
       [id]: type === 'checkbox' ? checked : value
     }));
   };
-  // 入力変更ハンドラ；ラジオボタン用
+  // ラジオボタン用
   const handleChangeR = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     setFormData((prev) => ({
@@ -224,48 +213,28 @@ export function SearchBooks() {
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
     }));
   };
-  // 関数を介する項目用（ISBN等）
+  // 関数を介する項目（ISBN等）用
   const handleChangeF = (id: any, value: any) => {
     setFormData((prev: any) => ({
       ...prev,
       [id]: value
     }));
   };
-
-  // 役割マスターの展開・取得
-  useEffect(() => {
-    const fetchRoles = async () => {
-      const { data, error } = await supabase.from('book_role_master').select('*').order('role_cd', { ascending: true });
-      if (error) {
-        console.error('Error fetching book_role_master:', error);
-      } else {
-        setRoles(data || []);
-      }
-    };
-    fetchRoles();
-  }, []);
+  // 役割マスタ select用
   const handleRole = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFormData({
       ...formData,
       role_cd: e.target.value // ここでrole_cdが取得される
     });
   };
-
-  // 書籍種別マスターの展開・取得
-  useEffect(() => {
-    const fetchBookTypes = async () => {
-      const { data, error } = await supabase
-        .from('booktype_master')
-        .select('*')
-        .order('booktype_cd', { ascending: true });
-      if (error) {
-        console.error('Error fetching book types:', error);
-      } else {
-        setBookTypes(data || []);
-      }
-    };
-    fetchBookTypes();
-  }, []);
+  // 書籍分類マスタ select用
+  const handleBookClass = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormData({
+      ...formData,
+      bookclass_cd: e.target.value // ここでbookclass_cdが取得される
+    });
+  };
+  // 書籍種別マスタ select用
   const handleBookType = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFormData({
       ...formData,
@@ -303,9 +272,7 @@ export function SearchBooks() {
                   }
                 }}
               />
-              {formData.isbn13 && !isbnHyphenate(formData.isbn13) ? (
-                <div className="text-red-500 ml-1">?</div>
-              ) : null}{' '}
+              {formData.isbn13 && !isbnHyphenate(formData.isbn13) ? <div className="text-red-500 ml-1">?</div> : null}
             </div>
             <div className="mt-2 ml-2">
               <label htmlFor="title" className="inline-block w-16">
@@ -315,7 +282,7 @@ export function SearchBooks() {
                 id="title"
                 className={styleItems}
                 type="text"
-                size={92}
+                size={88}
                 value={formData.title}
                 onChange={handleChange}
               />
@@ -358,7 +325,7 @@ export function SearchBooks() {
                 value={formData.publisher}
                 onChange={handleChange}
               />
-              <span className="ml-2">※不詳の場合はカッコで括り、（不明）（自費出版）等</span>
+              <span className="ml-2">から始まる（先頭一致）</span>
             </div>
             <div className="mt-2 ml-22">
               <div>
@@ -381,7 +348,7 @@ export function SearchBooks() {
                 </label>
                 <select id="role" className={styleItems} value={formData.role_cd} onChange={handleRole}>
                   <option value="">選択してください</option>
-                  {roles.map((item) =>
+                  {bookRoleMaster.map((item: any) =>
                     item.selectable ? (
                       <option key={item.role_cd} value={item.role_cd}>
                         {item.role_name}
@@ -434,120 +401,104 @@ export function SearchBooks() {
                 </div>
               </div>
             </div>
-            <div className="mt-2 ml-2">
-              <label htmlFor="booktype" className="inline-block w-16">
-                書籍種別
-              </label>
-              <select
-                id="booktype"
-                className={styleItems}
-                required
-                value={formData.booktype_cd}
-                onChange={handleBookType}
-              >
-                <option value="">選択してください</option>
-                {bookTypes.map((item) =>
-                  item.selectable ? (
-                    <option key={item.booktype_cd} value={item.booktype_cd}>
-                      {item.booktype}
-                    </option>
-                  ) : (
-                    <option key={item.booktype_cd} disabled>
-                      {item.booktype}
-                    </option>
-                  )
-                )}
-              </select>
+            <div className="flex mt-3 ml-2">
+              <div className="flex items-center">
+                <label htmlFor="bookclass" className="inline-block w-16">
+                  書籍分類
+                </label>
+                <select
+                  id="bookclass"
+                  className={styleItems}
+                  required
+                  value={formData.bookclass_cd}
+                  onChange={handleBookClass}
+                >
+                  <option value="">選択してください</option>
+                  {bookClassMaster.map((item: any) =>
+                    item.selectable ? (
+                      <option key={item.bookclass_cd} value={item.bookclass_cd}>
+                        {item.bookclass}
+                      </option>
+                    ) : (
+                      <option key={item.bookclass_cd} disabled>
+                        {item.bookclass}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+              <div className="flex items-center ml-42">
+                <label htmlFor="booktype" className="inline-block w-16">
+                  書籍種別
+                </label>
+                <select
+                  id="booktype"
+                  className={styleItems}
+                  required
+                  value={formData.booktype_cd}
+                  onChange={handleBookType}
+                >
+                  <option value="">選択してください</option>
+                  {bookTypeMaster.map((item: any) =>
+                    item.selectable ? (
+                      <option key={item.booktype_cd} value={item.booktype_cd}>
+                        {item.booktype}
+                      </option>
+                    ) : (
+                      <option key={item.booktype_cd} disabled>
+                        {item.booktype}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
             </div>
             <div className="flex mt-2 ml-2">
-              <div className="flex">
-                <div className="inline-block w-16 align-top"> 限定条件</div>
-                <div className={`${styleItems} ml-2`}>
-                  <div>
-                    <div className="flex ml-1">
-                      <label htmlFor="limitComic" className="inline-block w-18 mr-3">
-                        コミック
-                      </label>
-                      <label className="block w-20">
-                        <input
-                          type="radio"
-                          name="limitComic"
-                          value="comic"
-                          checked={formData.limitComic === 'comic'}
-                          onChange={handleChangeR}
-                          className="mr-1"
-                        />
-                        コミック
-                      </label>
-                      <label className="block w-23">
-                        <input
-                          type="radio"
-                          name="limitComic"
-                          value="nonComic"
-                          checked={formData.limitComic === 'nonComic'}
-                          onChange={handleChangeR}
-                          className="mr-1"
-                        />
-                        非コミック
-                      </label>
-                      <label className="block w-20">
-                        <input
-                          type="radio"
-                          name="limitComic"
-                          value="noLimit"
-                          checked={formData.limitComic === 'noLimit'}
-                          onChange={handleChangeR}
-                          className="mr-1"
-                        />
-                        無限定
-                      </label>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex border-t mt-1 ml-1">
-                      <label htmlFor="limitPossess" className="inline-block w-18 mr-3">
-                        書籍保有
-                      </label>
-                      <label className="block w-20">
-                        <input
-                          type="radio"
-                          name="limitPossess"
-                          value="possess"
-                          checked={formData.limitPossess === 'possess'}
-                          onChange={handleChangeR}
-                          className="mr-1"
-                        />
-                        保有中
-                      </label>
-                      <label className="block w-23">
-                        <input
-                          type="radio"
-                          name="limitPossess"
-                          value="nonPossess"
-                          checked={formData.limitPossess === 'nonPossess'}
-                          onChange={handleChangeR}
-                          className="mr-1"
-                        />
-                        保有せず
-                      </label>
-                      <label className="block w-20">
-                        <input
-                          type="radio"
-                          name="limitPossess"
-                          value="noLimit"
-                          checked={formData.limitPossess === 'noLimit'}
-                          onChange={handleChangeR}
-                          className="mr-1"
-                        />
-                        無限定
-                      </label>
-                    </div>
-                  </div>
+              <div className="flex items-center">
+                <label htmlFor="limitPossess" className="inline-block w-16">
+                  書籍保有
+                </label>
+                <div className={`${styleItems} flex ml-2`}>
+                  <label className="block w-20">
+                    <input
+                      type="radio"
+                      name="limitPossess"
+                      value="possess"
+                      checked={formData.limitPossess === 'possess'}
+                      onChange={handleChangeR}
+                      className="mr-1"
+                    />
+                    保有中
+                  </label>
+                  <label className="block w-23">
+                    <input
+                      type="radio"
+                      name="limitPossess"
+                      value="nonPossess"
+                      checked={formData.limitPossess === 'nonPossess'}
+                      onChange={handleChangeR}
+                      className="mr-1"
+                    />
+                    保有せず
+                  </label>
+                  <label className="block w-20">
+                    <input
+                      type="radio"
+                      name="limitPossess"
+                      value="noLimit"
+                      checked={formData.limitPossess === 'noLimit'}
+                      onChange={handleChangeR}
+                      className="mr-1"
+                    />
+                    無限定
+                  </label>
                 </div>
               </div>
-              <div className="flex ml-4">
-                <div>表示順</div>
-                <div className={`${styleItems} flex ml-1`}>
+              <div className="border-solid border-1 rounded-lg flex ml-44 p-1 items-center bg-yellow-200">
+                <label htmlFor="bookOrder" className="inline-block ml-2">
+                  表示順：
+                </label>
+                <div className="flex ml-2">
                   <label className="block w-20">
                     <input
                       type="radio"
@@ -675,7 +626,7 @@ export function SearchBooks() {
           <div className="flex flex-col border-solid border-2 rounded-lg h-1/8 mt-3 mr-1 p-2 flex items-center justify-center">
             <div className="text-lg font-bold text-red-500">データ検索件数制限</div>
             <div>最大{dbSearchMax}件</div>
-            {sqlLimit === 0 || sqlLimit > supabaseMaxRows ? <div>（supabaseによる）</div> : ''}
+            {sqlLimit === 0 || sqlLimit > supabaseMaxRows ? <div>（supabase設定値）</div> : null}
           </div>
           {/* 右側中段：ボタンエリア */}
           <div className="flex flex-col border-solid border-2 rounded-lg h-4/8 justify-around mt-3 mr-1 p-1">

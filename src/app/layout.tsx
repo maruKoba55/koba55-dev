@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
 import { Noto_Sans_JP, Roboto_Mono } from 'next/font/google';
-import { ConstantsProvider } from '@/context/ConstantsContext';
-import { getConstantsServer } from '@/utils/getConstantsServer';
+import { AppContextProvider } from '@/context/AppContext';
+import { getSystemConstants } from '@/utils/getSystemConstants';
+import { getBookRole } from '@/utils/getBookRole';
+import { getBookClass } from '@/utils/getBookClass';
+import { getBookType } from '@/utils/getBookType';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -26,13 +29,24 @@ const robotoMono = Roboto_Mono({
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // システム定数をすべて取得
-  const constants = await getConstantsServer('all');
+  const constants = await getSystemConstants('all');
+  // マスタ類をすべて取得
+  const bookRoleMaster = await getBookRole('all');
+  const bookClassMaster = await getBookClass('all');
+  const bookTypeMaster = await getBookType('all');
 
   return (
     <html lang="ja">
       <body className={`${notoSansJP.variable} ${robotoMono.variable} antialiased`}>
-        {/* システム定数をクライアント側のContextに流し込む */}
-        <ConstantsProvider initialConstants={constants ?? []}> {children}</ConstantsProvider>
+        {/* システム定数、マスタ値をクライアント側のContextに流し込む */}
+        <AppContextProvider
+          initialConstants={constants ?? []}
+          initialBookRoleMaster={bookRoleMaster ?? []}
+          initialBookClassMaster={bookClassMaster ?? []}
+          initialBookTypeMaster={bookTypeMaster ?? []}
+        >
+          {children}
+        </AppContextProvider>
       </body>
     </html>
   );

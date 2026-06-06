@@ -6,19 +6,19 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabaseClient } from '@/lib/Client';
 import { X } from 'lucide-react';
 import { CommonButton } from '@/components/ui/button';
-import { useSystemConstant } from '@/context/ConstantsContext';
+import { useSystemConstant, useBookRoleMaster, useBookClassMaster, useBookTypeMaster } from '@/context/AppContext';
 import { isbnHyphen10 } from '@/utils/isbnHyphen10';
 import { isbnHyphenate } from '@/utils/isbnHyphenate';
 
 export default function ListBook({
   titleAdd,
+  bookclass_cd,
   booktype_cd,
-  limit_comic,
   bookIdList
 }: {
   titleAdd: string;
+  bookclass_cd: string;
   booktype_cd: string;
-  limit_comic: string;
   bookIdList: number[];
 }) {
   const supabase = supabaseClient();
@@ -26,10 +26,13 @@ export default function ListBook({
   const [books, setBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true); // 読み込み状態を管理
 
-  // システム変数取得（カスタムフック）
+  // システム変数、マスタ値取得（カスタムフック）
   const listAlert = (useSystemConstant('listAlert') as number) ?? 0;
+  const bookRoleMaster = useBookRoleMaster();
+  const bookClassMaster = useBookClassMaster();
+  const bookTypeMaster = useBookTypeMaster();
 
-  // 各ボタンの処理（ホットキー設定は return ,if文より前に書かないとエラー？）
+  // 各ボタンの処理
   //［閉じる］
   const handleClose = () => {
     window.close();
@@ -42,12 +45,12 @@ export default function ListBook({
   //初期表示件数確認
   useEffect(() => {
     if (bookIdList.length === 0) {
-      alert('該当データがありません');
+      alert('該当する書籍がありません。');
       window.close();
       return;
     }
     if (listAlert > 0 && bookIdList.length > listAlert) {
-      const confirmed = window.confirm(`該当データ${bookIdList.length}件。時間のかかる場合がありますが続けますか？`);
+      const confirmed = window.confirm(`該当書籍${bookIdList.length}件。時間のかかる場合がありますが続けますか？`);
       if (!confirmed) {
         window.close();
         return;
@@ -55,44 +58,17 @@ export default function ListBook({
     }
   }, []); // 第2引数を空配列にすることで「初回のみ」実行
 
-  // 書籍種別が指定された時、種別名を取得
-  const [getBookType, setGetBookType] = useState(null);
-  useEffect(() => {
-    const fetchBookType = async () => {
-      if (booktype_cd) {
-        const { data, error } = await supabase
-          .from('booktype_master')
-          .select('booktype')
-          .eq('booktype_cd', booktype_cd)
-          .single();
-        if (!error && data) {
-          setGetBookType(data.booktype);
-        } else {
-          console.error(error);
-        }
-      }
-    };
-    fetchBookType();
-  }, []);
-
-  //一覧タイトル追加文字
+  // 一覧タイトル追加文字（書籍分類／書籍種別）
   let titleAdd2 = null;
-  if (booktype_cd) {
-    titleAdd2 = getBookType;
+  if (bookclass_cd) {
+    titleAdd2 = bookClassMaster.find((item: any) => item.bookclass_cd === bookclass_cd)?.bookclass || null;
   }
-  if (limit_comic !== 'noLimit') {
-    if (limit_comic === 'comic') {
-      if (titleAdd2) {
-        titleAdd2 = titleAdd2 + '／コミック';
-      } else {
-        titleAdd2 = 'コミック';
-      }
-    } else if (limit_comic === 'nonComic') {
-      if (titleAdd2) {
-        titleAdd2 = titleAdd2 + '／非コミック';
-      } else {
-        titleAdd2 = '非コミック';
-      }
+  if (booktype_cd) {
+    const titleTmp = bookTypeMaster.find((item: any) => item.booktype_cd === booktype_cd)?.booktype || null;
+    if (titleAdd2) {
+      titleAdd2 = titleAdd2 + '／' + titleTmp;
+    } else {
+      titleAdd2 = titleTmp;
     }
   }
 
@@ -111,12 +87,10 @@ export default function ListBook({
           `
           *,
           book_role (
-            *,
-            book_role_master (role_name)
+            *
           ),
           book_possess (
-            *,
-            booktype_master (booktype)
+            *
           )
         `
         )
@@ -182,13 +156,22 @@ export default function ListBook({
             <div className="text-sm ml-2">
               {book.first_publish_year}年／{book.publisher}
               {book.publish_series ? `（${book.publish_series}）` : ''}
-              {book.comic_f ? <span className=" text-green-500 ml-2">［コミック］</span> : ''}
+              {book.bookclass_cd ? (
+                <span className="text-green-500 ml-2">
+                  ［{bookClassMaster.find((item: any) => item.bookclass_cd === book.bookclass_cd)?.bookclass || null}］
+                </span>
+              ) : (
+                ''
+              )}
             </div>
             <div className="border-t mt-2">
               <ul className="grid grid-cols-5 gap-2 text-sm ml-2">
                 {book.book_role?.map((r: any) => (
                   <li key={r.id}>
-                    <span className="font-semibold">{r.book_role_master?.role_name}</span>：{r.person_name}
+                    <span className="font-semibold">
+                      {bookRoleMaster.find((item: any) => item.role_cd === r.role_cd)?.role_name || null}
+                    </span>
+                    ：{r.person_name.replace(/\s+/g, '')}
                   </li>
                 ))}
               </ul>
@@ -197,7 +180,10 @@ export default function ListBook({
               <ul className="grid grid-cols-3 gap-2 text-sm ml-2">
                 {book.book_possess?.map((p: any) => (
                   <li key={p.book_possess_id}>
-                    <span className="font-semibold">{p.booktype_master?.booktype}</span>： {p.get_date} 取得
+                    <span className="font-semibold">
+                      {bookTypeMaster.find((item: any) => item.booktype_cd === p.booktype_cd)?.booktype || null}
+                    </span>
+                    ： {p.get_date} 取得
                     {p.dispose_date ? `、${p.dispose_date} 処分` : ''}
                   </li>
                 ))}

@@ -7,7 +7,7 @@ import { supabaseClient } from '@/lib/Client';
 import { Pencil, Save, X, Plus, Trash2 } from 'lucide-react';
 import { CommonButton } from '@/components/ui/button';
 import { AddNoteModal } from '@/app/MyBooks/AddNoteModal';
-import { useSystemConstant } from '@/context/ConstantsContext';
+import { useSystemConstant, useBookRoleMaster } from '@/context/AppContext';
 
 type BookNote = {
   id: number;
@@ -23,27 +23,66 @@ export default function ListNoteBook() {
   const searchParams = useSearchParams();
   const bookId = searchParams.get('book_id');
   const bookTitle = searchParams.get('title');
+  const roleCd = searchParams.get('role_cd');
+  const personName = searchParams.get('person_name');
   const user = searchParams.get('user');
 
   const [notes, setNotes] = useState<BookNote[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<Partial<BookNote>>({});
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+  // 各ボタンの処理
+  // ［閉じる］
+  const handleClose = () => {
+    window.close();
+  };
+  useHotkeys('alt+c', (event) => {
+    event.preventDefault(); // ブラウザのデフォルト挙動を防止
+    handleClose();
+  });
+
   // システム変数取得（カスタムフック）
   const sqlLimit = (useSystemConstant('sqlLimit') as number) ?? 0;
+  const listAlert = (useSystemConstant('listAlert') as number) ?? 0;
+  const bookRoleMaster = useBookRoleMaster();
 
   // データ取得
-  let query = supabase.from('book_note').select('*').eq('book_id', bookId).order('read_st_date', { ascending: true });
-  if (sqlLimit) query = query.limit(sqlLimit);
   const fetchNotes = async () => {
+    setIsLoading(true);
+    let query = supabase.from('book_note').select('*').eq('book_id', bookId).order('read_st_date', { ascending: true });
+    if (sqlLimit) query = query.limit(sqlLimit);
     const { data, error } = await query;
     if (error) console.error(error);
     else setNotes(data || []);
+    setIsLoading(false);
   };
   useEffect(() => {
-    fetchNotes();
+    if (bookId) {
+      fetchNotes();
+    }
   }, [bookId]);
+
+  //初期表示件数確認
+  useEffect(() => {
+    if (isLoading) return;
+    if (notes.length === 0) {
+      alert(`『${bookTitle}』にはノートが登録されていません。`);
+    }
+    if (listAlert > 0 && notes.length > listAlert) {
+      const confirmed = window.confirm(
+        `『${bookTitle}』にはノートが${notes.length}件あります。時間のかかる場合がありますが続けますか？`
+      );
+      if (!confirmed) {
+        window.close();
+        return;
+      }
+    }
+  }, [notes, isLoading]);
+  if (isLoading) {
+    return <p>読み込み中...</p>;
+  }
 
   // 編集開始
   const handleEdit = (note: BookNote) => {
@@ -79,8 +118,8 @@ export default function ListNoteBook() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('このノートを削除しますか？')) return;
+  const handleDelete = async (id: number, read_st_date: string | null) => {
+    if (!confirm(`${read_st_date}のノートを削除しますか？`)) return;
     const { error } = await supabase.from('book_note').delete().eq('id', id);
     if (!error) {
       fetchNotes(); // 削除成功後、一覧を再取得
@@ -88,16 +127,6 @@ export default function ListNoteBook() {
       alert(`削除失敗 code=${error.code} : ${error.message}`);
     }
   };
-
-  // 各ボタンの処理
-  // ［閉じる］
-  const handleClose = () => {
-    window.close();
-  };
-  useHotkeys('alt+c', (event) => {
-    event.preventDefault(); // ブラウザのデフォルト挙動を防止
-    handleClose();
-  });
 
   const screenMinW = 800;
 
@@ -107,21 +136,26 @@ export default function ListNoteBook() {
         style={{ width: `${screenMinW + 8}px` }}
         className="text-center text-3xl font-bold underline bg-cyan-500 mx-2"
       >
-        書籍管理
+        書籍管理（ノート）
       </div>
       <div style={{ width: `${screenMinW}px` }} className="border-solid border-2 rounded-lg flex m-2 p-2">
         <div>
-          <div className="text-xl font-bold text-blue-500 m-1">読書ノート</div>
-          <div className="text-xl font-bold text-gray-500 ml-3 mb-4">『{bookTitle}』</div>
-
+          <div className="font-bold text-gray-500 ml-3 mb-4">
+            <span className="text-xl"> 『{bookTitle}』</span>
+            <span>
+              {roleCd && personName
+                ? `　${personName.replace(/\s+/g, '')}（${bookRoleMaster.find((item: any) => item.role_cd === roleCd)?.role_name || null}）`
+                : ''}
+            </span>
+          </div>
           <div className="overflow-x-auto border rounded-lg">
             <table className="w-full table-fixed text-left text-sm">
               <thead className="bg-gray-50 border-b">
                 <tr>
-                  <th className="p-2">読書開始</th>
-                  <th className="p-2">読書終了</th>
-                  <th className="w-2/3 p-2">ノート</th>
-                  <th className="w-1/10 p-2">操作</th>
+                  <th className="flex-col text-center w-30 p-2">読書開始</th>
+                  <th className="flex-col text-center w-30 p-2">読書終了</th>
+                  <th className="flex-col text-left w-2/3 p-2">ノ ー ト</th>
+                  <th className="flex-col text-center w-1/10 p-2">操 作</th>
                 </tr>
               </thead>
               <tbody>
@@ -166,9 +200,9 @@ export default function ListNoteBook() {
                       </>
                     ) : (
                       <>
-                        <td className="p-2">{note.read_st_date}</td>
-                        <td className="p-2">{note.read_ed_date}</td>
-                        <td className="p-2 whitespace-pre-wrap break-words">{note.note}</td>
+                        <td className="flex-col text-center p-2">{note.read_st_date}</td>
+                        <td className="flex-col text-center p-2">{note.read_ed_date}</td>
+                        <td className="flex-col text-left p-2 whitespace-pre-wrap break-words">{note.note}</td>
                         <td className="p-2">
                           <div className="flex gap-3">
                             <button
@@ -179,7 +213,7 @@ export default function ListNoteBook() {
                               <Pencil size={18} />
                             </button>
                             <button
-                              onClick={() => handleDelete(note.id)}
+                              onClick={() => handleDelete(note.id, note.read_st_date)}
                               className="text-red-600 hover:text-red-800"
                               title="削除"
                             >
@@ -206,6 +240,7 @@ export default function ListNoteBook() {
           }
           variant="blue"
           onClick={() => setIsAddModalOpen(true)}
+          disabled={editingId !== null} // 編集中の場合はdisable
         />
         <CommonButton
           label={
@@ -216,6 +251,7 @@ export default function ListNoteBook() {
           }
           variant="outline"
           onClick={handleClose}
+          disabled={editingId !== null} // 編集中の場合はdisable
         />
       </div>
       {/* 読書ノート追加 */}
