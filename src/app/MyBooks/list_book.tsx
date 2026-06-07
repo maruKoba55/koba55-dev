@@ -14,11 +14,13 @@ export default function ListBook({
   titleAdd,
   bookclass_cd,
   booktype_cd,
+  limit_possess,
   bookIdList
 }: {
   titleAdd: string;
   bookclass_cd: string;
   booktype_cd: string;
+  limit_possess: string;
   bookIdList: number[];
 }) {
   const supabase = supabaseClient();
@@ -58,13 +60,28 @@ export default function ListBook({
     }
   }, []); // 第2引数を空配列にすることで「初回のみ」実行
 
-  // 一覧タイトル追加文字（書籍分類／書籍種別）
+  // 一覧タイトル追加文字（書籍分類／書籍種別／書籍保有）
   let titleAdd2 = null;
   if (bookclass_cd) {
     titleAdd2 = bookClassMaster.find((item: any) => item.bookclass_cd === bookclass_cd)?.bookclass || null;
   }
   if (booktype_cd) {
     const titleTmp = bookTypeMaster.find((item: any) => item.booktype_cd === booktype_cd)?.booktype || null;
+    if (titleAdd2) {
+      titleAdd2 = titleAdd2 + '／' + titleTmp;
+    } else {
+      titleAdd2 = titleTmp;
+    }
+  }
+  if (limit_possess === 'possess') {
+    const titleTmp = '保有中';
+    if (titleAdd2) {
+      titleAdd2 = titleAdd2 + '／' + titleTmp;
+    } else {
+      titleAdd2 = titleTmp;
+    }
+  } else if (limit_possess === 'nonPossess') {
+    const titleTmp = '保有せず';
     if (titleAdd2) {
       titleAdd2 = titleAdd2 + '／' + titleTmp;
     } else {

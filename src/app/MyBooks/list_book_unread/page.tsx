@@ -34,13 +34,14 @@ export default async function ListBookPage({ searchParams }: PageProps) {
   // book_id 配列 (例: [10001, 10005, ...])
   const bookIdList = idListData?.map((item: any) => item.book_id) || [];
 
-  // build時のエラー避けのため、bookclass_cd、booktype_cdが undefined、string[]となる可能性を排除
+  // build時のエラー避けのため、bookclass_cd等が undefined、string[]となる可能性を排除
   return (
     <div>
       <ListBook
         titleAdd="未読"
         bookclass_cd={Array.isArray(params.bookclass_cd) ? params.bookclass_cd[0] : (params.bookclass_cd ?? '')}
         booktype_cd={Array.isArray(params.booktype_cd) ? params.booktype_cd[0] : (params.booktype_cd ?? '')}
+        limit_possess=""
         bookIdList={bookIdList}
       />
     </div>

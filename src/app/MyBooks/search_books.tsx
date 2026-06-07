@@ -62,7 +62,11 @@ export function SearchBooks() {
       return null;
     }
     if (formData.booktype_cd && formData.limitPossess !== 'noLimit') {
-      alert('書籍種別と書籍保有の限定条件は同時に指定できません。');
+      alert('書籍種別と書籍保有は同時に指定できません。');
+      return null;
+    }
+    if (formData.read_st_from && formData.read_st_to && formData.read_st_from > formData.read_st_to) {
+      alert('読書開始と終了が逆転しています。');
       return null;
     }
     return true;
@@ -561,12 +565,14 @@ export function SearchBooks() {
           {/* 左側下段：読書ノート検索 */}
           <div className="border-solid border-1 rounded-lg m-3 p-2">
             <div className="m-1">
-              <span className="text-xl font-bold text-blue-500">読書ノート検索</span>
-              <span className="ml-2">※ノートの登録・編集は当該書籍の閲覧画面から</span>
+              <span className="text-xl font-bold text-blue-500">読書ノート・未読書籍検索</span>
+              <span className="ml-3">※ノートの登録・削除は当該書籍の閲覧画面から</span>
             </div>
             <div className="mt-2 ml-3">
               <span className="text-lg text-white bg-blue-500">［ノート一覧］</span>
-              ：書籍検索条件（書籍保有の限定と表示順を除く）＋読書開始日でノートを一覧表示
+              ：書籍検索条件（
+              <span className="underline underline-offset-3">書籍保有、表示順を除く</span>
+              ）＋読書開始日でノートを一覧・編集
             </div>
             <div className="flex items-center mt-2 ml-36">
               <label htmlFor="read_st_date" className="inline-block w-16">
@@ -592,7 +598,8 @@ export function SearchBooks() {
             <div className="flex items-center mt-1 ml-3">
               <div className="flex items-center">
                 <span className="text-lg text-white bg-blue-500">［未読一覧］</span>
-                ：書籍検索条件（書籍保有の限定を除く）でノート未存在の書籍を一覧表示
+                ：書籍検索条件（<span className="underline underline-offset-3">書籍保有を除く</span>
+                ）でノート未存在の書籍を一覧表示
               </div>
             </div>
             <div className="flex mt-2 ml-2 p-2 justify-around">

@@ -28,7 +28,7 @@ export default function ListNoteBook() {
   const user = searchParams.get('user');
 
   const [notes, setNotes] = useState<BookNote[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [Loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<Partial<BookNote>>({});
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -42,63 +42,20 @@ export default function ListNoteBook() {
     event.preventDefault(); // ブラウザのデフォルト挙動を防止
     handleClose();
   });
-
-  // システム変数取得（カスタムフック）
-  const sqlLimit = (useSystemConstant('sqlLimit') as number) ?? 0;
-  const listAlert = (useSystemConstant('listAlert') as number) ?? 0;
-  const bookRoleMaster = useBookRoleMaster();
-
-  // データ取得
-  const fetchNotes = async () => {
-    setIsLoading(true);
-    let query = supabase.from('book_note').select('*').eq('book_id', bookId).order('read_st_date', { ascending: true });
-    if (sqlLimit) query = query.limit(sqlLimit);
-    const { data, error } = await query;
-    if (error) console.error(error);
-    else setNotes(data || []);
-    setIsLoading(false);
-  };
-  useEffect(() => {
-    if (bookId) {
-      fetchNotes();
-    }
-  }, [bookId]);
-
-  //初期表示件数確認
-  useEffect(() => {
-    if (isLoading) return;
-    if (notes.length === 0) {
-      alert(`『${bookTitle}』にはノートが登録されていません。`);
-    }
-    if (listAlert > 0 && notes.length > listAlert) {
-      const confirmed = window.confirm(
-        `『${bookTitle}』にはノートが${notes.length}件あります。時間のかかる場合がありますが続けますか？`
-      );
-      if (!confirmed) {
-        window.close();
-        return;
-      }
-    }
-  }, [notes, isLoading]);
-  if (isLoading) {
-    return <p>読み込み中...</p>;
-  }
-
-  // 編集開始
+  // ［編集開始］
   const handleEdit = (note: BookNote) => {
     setEditingId(note.id);
     setEditForm(note);
   };
-
-  // 更新実行
+  // ［編集内容を保存］
   const handleUpdate = async (id: number) => {
     if (!editForm.read_st_date) {
-      alert('読書開始は入力必須です。（不明時は 1/1/1）');
+      alert('読書開始を入力してください（不明時は 1/1/1）。');
       return;
     }
     if (editForm.read_st_date && editForm.read_ed_date) {
       if (new Date(editForm.read_st_date) > new Date(editForm.read_ed_date)) {
-        alert('読書終了を確認してください。');
+        alert('読書開始と終了が逆転しています。');
         return;
       }
     }
@@ -117,9 +74,9 @@ export default function ListNoteBook() {
       alert(`更新失敗 code=${error.code} : ${error.message}`);
     }
   };
-
+  // ［削除］
   const handleDelete = async (id: number, read_st_date: string | null) => {
-    if (!confirm(`${read_st_date}のノートを削除しますか？`)) return;
+    if (!confirm(`『${bookTitle}』${read_st_date}のノートを削除しますか？`)) return;
     const { error } = await supabase.from('book_note').delete().eq('id', id);
     if (!error) {
       fetchNotes(); // 削除成功後、一覧を再取得
@@ -127,6 +84,47 @@ export default function ListNoteBook() {
       alert(`削除失敗 code=${error.code} : ${error.message}`);
     }
   };
+
+  // システム変数取得（カスタムフック）
+  const sqlLimit = (useSystemConstant('sqlLimit') as number) ?? 0;
+  const listAlert = (useSystemConstant('listAlert') as number) ?? 0;
+  const bookRoleMaster = useBookRoleMaster();
+
+  // データ取得
+  const fetchNotes = async () => {
+    setLoading(true);
+    let query = supabase.from('book_note').select('*').eq('book_id', bookId).order('read_st_date', { ascending: true });
+    if (sqlLimit) query = query.limit(sqlLimit);
+    const { data, error } = await query;
+    if (error) console.error(error);
+    else setNotes(data || []);
+    setLoading(false);
+  };
+  useEffect(() => {
+    if (bookId) {
+      fetchNotes();
+    }
+  }, [bookId]);
+
+  //初期表示件数確認
+  useEffect(() => {
+    if (Loading) return;
+    if (notes.length === 0) {
+      alert(`『${bookTitle}』にはノートが登録されていません。`);
+    }
+    if (listAlert > 0 && notes.length > listAlert) {
+      const confirmed = window.confirm(
+        `『${bookTitle}』にはノートが${notes.length}件あります。時間のかかる場合がありますが続けますか？`
+      );
+      if (!confirmed) {
+        window.close();
+        return;
+      }
+    }
+  }, [notes, Loading]);
+  if (Loading) {
+    return <p>読み込み中...</p>;
+  }
 
   const screenMinW = 800;
 
@@ -144,7 +142,7 @@ export default function ListNoteBook() {
             <span className="text-xl"> 『{bookTitle}』</span>
             <span>
               {roleCd && personName
-                ? `　${personName.replace(/\s+/g, '')}（${bookRoleMaster.find((item: any) => item.role_cd === roleCd)?.role_name || null}）`
+                ? `　${bookRoleMaster.find((item: any) => item.role_cd === roleCd)?.role_name || null}：${personName.replace(/\s+/g, '')}`
                 : ''}
             </span>
           </div>
@@ -183,17 +181,25 @@ export default function ListNoteBook() {
                         </td>
                         <td className="p-2">
                           <textarea
-                            rows={3}
+                            rows={4}
                             className="border p-1 rounded w-full"
                             value={editForm.note || ''}
                             onChange={(e) => setEditForm({ ...editForm, note: e.target.value })}
                           />
                         </td>
                         <td className="p-2 flex gap-2">
-                          <button onClick={() => handleUpdate(note.id)} className="text-green-600 hover:text-green-800">
+                          <button
+                            onClick={() => handleUpdate(note.id)}
+                            className="text-green-600 hover:text-green-800"
+                            title="編集内容を保存"
+                          >
                             <Save size={20} />
                           </button>
-                          <button onClick={() => setEditingId(null)} className="text-gray-500 hover:text-gray-700">
+                          <button
+                            onClick={() => setEditingId(null)}
+                            className="text-gray-500 hover:text-gray-700"
+                            title="編集内容を破棄"
+                          >
                             <X size={20} />
                           </button>
                         </td>
@@ -204,7 +210,7 @@ export default function ListNoteBook() {
                         <td className="flex-col text-center p-2">{note.read_ed_date}</td>
                         <td className="flex-col text-left p-2 whitespace-pre-wrap break-words">{note.note}</td>
                         <td className="p-2">
-                          <div className="flex gap-3">
+                          <div className="flex gap-3 justify-center">
                             <button
                               onClick={() => handleEdit(note)}
                               className="text-blue-600 hover:text-blue-800"

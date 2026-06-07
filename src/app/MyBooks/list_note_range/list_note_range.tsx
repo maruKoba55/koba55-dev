@@ -4,7 +4,7 @@ import { Fragment, useEffect, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useSearchParams } from 'next/navigation';
 import { supabaseClient } from '@/lib/Client';
-import { X } from 'lucide-react';
+import { Pencil, Save, X } from 'lucide-react';
 import { CommonButton } from '@/components/ui/button';
 import { useSystemConstant, useBookRoleMaster, useBookClassMaster, useBookTypeMaster } from '@/context/AppContext';
 
@@ -39,8 +39,53 @@ export default function ListNoteRange() {
   const s_person_search_type = searchParams.get('person_search_type');
   const s_bookclass_cd = searchParams.get('bookclass_cd');
   const s_booktype_cd = searchParams.get('booktype_cd');
+
   const [notes, setNotes] = useState<RangeNote[]>([]);
   const [loading, setLoading] = useState(true); // 読み込み状態を管理
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<Partial<RangeNote>>({});
+
+  // 各ボタンの処理
+  // ［閉じる］
+  const handleClose = () => {
+    window.close();
+  };
+  useHotkeys('alt+c', (event) => {
+    event.preventDefault(); // ブラウザのデフォルト挙動を防止
+    handleClose();
+  });
+  // ［編集開始］
+  const handleEdit = (note: RangeNote) => {
+    setEditingId(note.note_id);
+    setEditForm(note);
+  };
+  // ［編集内容を保存］
+  const handleUpdate = async (id: number) => {
+    if (!editForm.read_st_date) {
+      alert('読書開始を入力してください（不明時は 1/1/1）。');
+      return;
+    }
+    if (editForm.read_st_date && editForm.read_ed_date) {
+      if (new Date(editForm.read_st_date) > new Date(editForm.read_ed_date)) {
+        alert('読書開始と終了が逆転しています。');
+        return;
+      }
+    }
+    const { error } = await supabase
+      .from('book_note')
+      .update({
+        read_st_date: editForm.read_st_date,
+        read_ed_date: editForm.read_ed_date || null,
+        note: editForm.note
+      })
+      .eq('id', id);
+    if (!error) {
+      setEditingId(null);
+      fetchNotes();
+    } else {
+      alert(`更新失敗 code=${error.code} : ${error.message}`);
+    }
+  };
 
   // システム変数、マスタ値取得（カスタムフック）
   const sqlLimit = parseInt(useSystemConstant('sqlLimit') as string) || 0;
@@ -50,42 +95,12 @@ export default function ListNoteRange() {
   const bookClassMaster = useBookClassMaster();
   const bookTypeMaster = useBookTypeMaster();
 
-  // 見出し文字
-  // 書籍分類／書籍種別
-  let subTitle1 = null;
-  let subTitle2 = null;
-  if (s_bookclass_cd) {
-    subTitle1 = bookClassMaster.find((item: any) => item.bookclass_cd === s_bookclass_cd)?.bookclass || null;
-  }
-  if (s_booktype_cd) {
-    subTitle2 = bookTypeMaster.find((item: any) => item.booktype_cd === s_booktype_cd)?.booktype || null;
-    if (subTitle1) {
-      subTitle1 = subTitle1 + '／' + subTitle2;
-    } else {
-      subTitle1 = subTitle2;
-    }
-  }
-  if (subTitle1) {
-    subTitle1 = `【${subTitle1}】`;
-  }
-  // 読書開始日 From～To
-  const dateMin = '0001-01-01'; // 日付最小値
-  const dateMax = '9999-12-31'; // 日付最大値
-  subTitle2 = null;
-  if (s_read_st_from != dateMin) {
-    subTitle2 = s_read_st_from + '～';
-  }
-  if (s_read_st_to != dateMax) {
-    if (subTitle2) {
-      subTitle2 = subTitle2 + s_read_st_to;
-    } else {
-      subTitle2 = '～' + s_read_st_to;
-    }
-  }
   // データ取得
   // 範囲日付の編集
-  let dateFrom = dateMin; // 日付最小値
-  let dateTo = dateMax; // 日付最大値
+  const dateMin = '0001-01-01'; // 日付最小値
+  const dateMax = '9999-12-31'; // 日付最大値
+  let dateFrom = dateMin;
+  let dateTo = dateMax;
   if (s_read_st_from) dateFrom = s_read_st_from;
   if (s_read_st_to) dateTo = s_read_st_to;
   let dateTmp = new Date(dateTo); //to日付を画面指定の1日後として、lt（より前）で検索する
@@ -136,7 +151,7 @@ export default function ListNoteRange() {
       return;
     }
     if (listAlert > 0 && notes.length > listAlert) {
-      const confirmed = window.confirm(`該当データ${notes.length}件。時間のかかる場合がありますが続けますか？`);
+      const confirmed = window.confirm(`該当ノート${notes.length}件。時間のかかる場合がありますが続けますか？`);
       if (!confirmed) {
         window.close();
         return;
@@ -144,14 +159,36 @@ export default function ListNoteRange() {
     }
   }, [loading, notes]);
 
-  // ［閉じる］ボタンの処理
-  const handleClose = () => {
-    window.close();
-  };
-  useHotkeys('alt+c', (event) => {
-    event.preventDefault(); // ブラウザのデフォルト挙動を防止
-    handleClose();
-  });
+  // 見出し文字の編集
+  //  書籍分類／書籍種別
+  let subTitle1 = null;
+  let subTitle2 = null;
+  if (s_bookclass_cd) {
+    subTitle1 = bookClassMaster.find((item: any) => item.bookclass_cd === s_bookclass_cd)?.bookclass || null;
+  }
+  if (s_booktype_cd) {
+    subTitle2 = bookTypeMaster.find((item: any) => item.booktype_cd === s_booktype_cd)?.booktype || null;
+    if (subTitle1) {
+      subTitle1 = subTitle1 + '／' + subTitle2;
+    } else {
+      subTitle1 = subTitle2;
+    }
+  }
+  if (subTitle1) {
+    subTitle1 = `【${subTitle1}】`;
+  }
+  //  読書開始日 From～To
+  subTitle2 = null;
+  if (s_read_st_from != dateMin) {
+    subTitle2 = s_read_st_from + '～';
+  }
+  if (s_read_st_to != dateMax) {
+    if (subTitle2) {
+      subTitle2 = subTitle2 + s_read_st_to;
+    } else {
+      subTitle2 = '～' + s_read_st_to;
+    }
+  }
 
   const screenMinW = 800;
 
@@ -173,36 +210,38 @@ export default function ListNoteRange() {
               {/* 列幅を固定 */}
               <colgroup>
                 <col className="w-9" />
-                <col className="w-22" />
-                <col className="w-22" />
-                <col />
+                <col className="w-30" />
+                <col className="w-30" />
+                <col className="w-2/3" />
+                <col className="w-1/10" />
               </colgroup>
               <thead className="bg-gray-50 border-b">
                 <tr>
-                  <th colSpan={4} className="p-1 font-bold text-blue-600">
-                    <span className="text-white bg-gray-400 w-9 p-1">No.</span> 『タイトル』　著者等
-                    （出版社／出版シリーズ、初版年）
+                  <th colSpan={5} className="p-1 font-bold text-blue-600">
+                    <span className="text-white bg-gray-400 p-1">No.</span>
+                    <span> 『タイトル』　著者等 （出版社／出版シリーズ、初版年）</span>
                     <span className=" text-green-500 p-1 ml-2">［書籍分類］</span>
                   </th>
                 </tr>
                 <tr>
-                  <th className="p-1"></th>
-                  <th className="p-1">読書開始</th>
-                  <th className="p-1">読書終了</th>
-                  <th className="p-1">ノート</th>
+                  <th className="flex-col p-1"> </th>
+                  <th className="flex-col p-1">読書開始</th>
+                  <th className="flex-col p-1">読書終了</th>
+                  <th className="flex-col text-left p-1">ノ ー ト</th>
+                  <th className="flex-col text-center p-1">操作</th>
                 </tr>
               </thead>
               <tbody>
                 {notes.map((note, i) => (
                   <Fragment key={note.note_id}>
                     <tr className="border-t hover:bg-gray-50">
-                      <td colSpan={4}>
+                      <td colSpan={5}>
                         <div className="flex">
                           <div className="flex text-white bg-gray-400 min-w-9 align-top justify-end p-1"> {i + 1}</div>
                           <div className="p-1 font-bold text-blue-600">
                             『{note.title}』
                             {note.role_cd && note.person_name
-                              ? `　${note.person_name.replace(/\s+/g, '')}（${bookRoleMaster.find((item: any) => item.role_cd === note.role_cd)?.role_name || null}）`
+                              ? `　${bookRoleMaster.find((item: any) => item.role_cd === note.role_cd)?.role_name || null}：${note.person_name.replace(/\s+/g, '')}`
                               : ''}
                             （{note.publisher}
                             {note.publish_series ? `／${note.publish_series}` : ''}、{note.first_publish_year}）
@@ -221,10 +260,71 @@ export default function ListNoteRange() {
                       </td>
                     </tr>
                     <tr>
-                      <td className="p-1"></td>
-                      <td className="p-1">{note.read_st_date}</td>
-                      <td className="p-1">{note.read_ed_date}</td>
-                      <td className="p-1 whitespace-pre-wrap break-words">{note.note}</td>
+                      {editingId === note.note_id ? (
+                        <>
+                          <td className="p-1"></td>
+                          <td className="p-1">
+                            <input
+                              type="date"
+                              required
+                              className="border p-1 rounded w-full"
+                              value={editForm.read_st_date || ''}
+                              onChange={(e) => setEditForm({ ...editForm, read_st_date: e.target.value })}
+                            />
+                          </td>
+                          <td className="p-1">
+                            <input
+                              type="date"
+                              className="border p-1 rounded w-full"
+                              value={editForm.read_ed_date || ''}
+                              min={editForm.read_st_date || ''}
+                              onChange={(e) => setEditForm({ ...editForm, read_ed_date: e.target.value })}
+                            />
+                          </td>
+                          <td className="p-1">
+                            <textarea
+                              rows={4}
+                              className="border p-1 rounded w-full"
+                              value={editForm.note || ''}
+                              onChange={(e) => setEditForm({ ...editForm, note: e.target.value })}
+                            />
+                          </td>
+                          <td className="p-1 flex gap-2 justify-center">
+                            <button
+                              onClick={() => handleUpdate(note.note_id)}
+                              className="text-green-600 hover:text-green-800"
+                              title="編集内容を保存"
+                            >
+                              <Save size={20} />
+                            </button>
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="text-gray-500 hover:text-gray-700"
+                              title="編集内容を破棄"
+                            >
+                              <X size={20} />
+                            </button>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="p-1"></td>
+                          <td className="p-1">{note.read_st_date}</td>
+                          <td className="p-1">{note.read_ed_date}</td>
+                          <td className="p-1 whitespace-pre-wrap break-words">{note.note}</td>
+                          <td className="p-1">
+                            <div className="flex justify-center">
+                              <button
+                                onClick={() => handleEdit(note)}
+                                className="text-blue-600 hover:text-blue-800"
+                                title="編集"
+                              >
+                                <Pencil size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      )}
                     </tr>
                   </Fragment>
                 ))}
@@ -245,6 +345,7 @@ export default function ListNoteRange() {
           }
           variant="outline"
           onClick={handleClose}
+          disabled={editingId !== null} // 編集中の場合はdisable
         />
       </div>
     </div>
