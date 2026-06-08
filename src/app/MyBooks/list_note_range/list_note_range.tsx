@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { supabaseClient } from '@/lib/Client';
 import { Pencil, Save, X } from 'lucide-react';
 import { CommonButton } from '@/components/ui/button';
-import { useSystemConstant, useBookRoleMaster, useBookClassMaster, useBookTypeMaster } from '@/context/AppContext';
+import { useSystemConstant, useBookRoleMaster, useBookClassMaster, useBookFormMaster } from '@/context/AppContext';
 
 type RangeNote = {
   note_id: number;
@@ -38,7 +38,7 @@ export default function ListNoteRange() {
   const s_person_name = searchParams.get('person_name');
   const s_person_search_type = searchParams.get('person_search_type');
   const s_bookclass_cd = searchParams.get('bookclass_cd');
-  const s_booktype_cd = searchParams.get('booktype_cd');
+  const s_bookform_cd = searchParams.get('bookform_cd');
 
   const [notes, setNotes] = useState<RangeNote[]>([]);
   const [loading, setLoading] = useState(true); // 読み込み状態を管理
@@ -93,7 +93,7 @@ export default function ListNoteRange() {
   const listAlert = parseInt(useSystemConstant('listAlert') as string) || 0;
   const bookRoleMaster = useBookRoleMaster();
   const bookClassMaster = useBookClassMaster();
-  const bookTypeMaster = useBookTypeMaster();
+  const bookFormMaster = useBookFormMaster();
 
   // データ取得
   // 範囲日付の編集
@@ -130,7 +130,7 @@ export default function ListNoteRange() {
       p_person_name: (s_person_name as string) || null,
       p_person_search_type: (s_person_search_type as string) || 'top',
       p_bookclass_cd: (s_bookclass_cd as string) || null,
-      p_booktype_cd: (s_booktype_cd as string) || null,
+      p_bookform_cd: (s_bookform_cd as string) || null,
       p_select_limit: (dbSearchMax as number) || 9999
     });
     if (error) console.error(error);
@@ -160,14 +160,14 @@ export default function ListNoteRange() {
   }, [loading, notes]);
 
   // 見出し文字の編集
-  //  書籍分類／書籍種別
+  //  書籍分類／書籍形態
   let subTitle1 = null;
   let subTitle2 = null;
   if (s_bookclass_cd) {
     subTitle1 = bookClassMaster.find((item: any) => item.bookclass_cd === s_bookclass_cd)?.bookclass || null;
   }
-  if (s_booktype_cd) {
-    subTitle2 = bookTypeMaster.find((item: any) => item.booktype_cd === s_booktype_cd)?.booktype || null;
+  if (s_bookform_cd) {
+    subTitle2 = bookFormMaster.find((item: any) => item.bookform_cd === s_bookform_cd)?.bookform || null;
     if (subTitle1) {
       subTitle1 = subTitle1 + '／' + subTitle2;
     } else {

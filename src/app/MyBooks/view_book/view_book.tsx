@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabaseClient } from '@/lib/Client';
 import { Notebook, Pencil, RefreshCw, StepBack, StepForward, Trash2, X } from 'lucide-react';
 import { CommonButton } from '@/components/ui/button';
-import { useSystemConstant, useBookClassMaster, useBookTypeMaster, useBookRoleMaster } from '@/context/AppContext';
+import { useSystemConstant, useBookClassMaster, useBookFormMaster, useBookRoleMaster } from '@/context/AppContext';
 import { BookForm } from '@/app/MyBooks/BookForm';
 
 export default function ViewBook({ bookIdList }: { bookIdList: number[] }) {
@@ -27,7 +27,7 @@ export default function ViewBook({ bookIdList }: { bookIdList: number[] }) {
   // システム変数、マスタ値取得（カスタムフック）
   const viewAlert = (useSystemConstant('viewAlert') as number) ?? 0;
   const bookClassMaster = useBookClassMaster();
-  const bookTypeMaster = useBookTypeMaster();
+  const bookFormMaster = useBookFormMaster();
   const bookRoleMaster = useBookRoleMaster();
 
   // 各ボタンの処理
@@ -222,7 +222,7 @@ export default function ViewBook({ bookIdList }: { bookIdList: number[] }) {
                 <div key={p.book_possess_id} className="flex items-start text-sm border-b border-gray-50">
                   <div className="flex flex-col mr-2">
                     <div>
-                      種　別：{bookTypeMaster.find((item: any) => item.booktype_cd === p.booktype_cd)?.booktype || null}
+                      種　別：{bookFormMaster.find((item: any) => item.bookform_cd === p.bookform_cd)?.bookform || null}
                     </div>
                     <div>入手日：{p.get_date}</div>
                     <div>処分日：{p.dispose_date}</div>

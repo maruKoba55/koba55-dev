@@ -6,7 +6,7 @@ import { supabaseClient } from '@/lib/Client';
 import { BookCopy, BookSearch, CalendarSearch, Eraser, LogIn, LogOut, Plus, TextSearch, Toolbox } from 'lucide-react';
 import { EditProfile } from '@/components/editProfile';
 import { CommonButton } from '@/components/ui/button';
-import { useSystemConstant, useBookRoleMaster, useBookClassMaster, useBookTypeMaster } from '@/context/AppContext';
+import { useSystemConstant, useBookRoleMaster, useBookClassMaster, useBookFormMaster } from '@/context/AppContext';
 import { isbnHyphenate } from '@/utils/isbnHyphenate';
 import { styleItems } from '@/app/constants';
 
@@ -20,7 +20,7 @@ const initialFormState = {
   person_name: '',
   personSearch: 'top',
   bookclass_cd: '',
-  booktype_cd: '',
+  bookform_cd: '',
   limitPossess: 'noLimit',
   bookOrder: 'publish',
   read_st_from: '',
@@ -46,7 +46,7 @@ export function SearchBooks() {
   const supabaseMaxRows = parseInt(useSystemConstant('supabaseMaxRows') as string) || 0;
   const bookRoleMaster = useBookRoleMaster();
   const bookClassMaster = useBookClassMaster();
-  const bookTypeMaster = useBookTypeMaster();
+  const bookFormMaster = useBookFormMaster();
 
   //検索件数上限の設定
   if (supabaseMaxRows === 0) {
@@ -61,12 +61,12 @@ export function SearchBooks() {
       alert('役割を指定した場合、人（団体）名も入力してください。');
       return null;
     }
-    if (formData.booktype_cd && formData.limitPossess !== 'noLimit') {
-      alert('書籍種別と書籍保有は同時に指定できません。');
+    if (formData.bookform_cd && formData.limitPossess !== 'noLimit') {
+      alert('書籍形態と書籍保有は同時に指定できません。');
       return null;
     }
     if (formData.read_st_from && formData.read_st_to && formData.read_st_from > formData.read_st_to) {
-      alert('読書開始と終了が逆転しています。');
+      alert('読書開始と終了の日付が逆転しています。');
       return null;
     }
     return true;
@@ -86,7 +86,7 @@ export function SearchBooks() {
       person_name: formData.person_name || '',
       person_search_type: formData.personSearch,
       bookclass_cd: formData.bookclass_cd || '',
-      booktype_cd: formData.booktype_cd || '',
+      bookform_cd: formData.bookform_cd || '',
       limit_possess: formData.limitPossess || '',
       display_order: formData.bookOrder || '',
       sqlLimit: sqlLimit.toString() || '0',
@@ -107,7 +107,7 @@ export function SearchBooks() {
       person_name: formData.person_name || '',
       person_search_type: formData.personSearch,
       bookclass_cd: formData.bookclass_cd || '',
-      booktype_cd: formData.booktype_cd || '',
+      bookform_cd: formData.bookform_cd || '',
       limit_possess: formData.limitPossess || '',
       display_order: formData.bookOrder || '',
       sqlLimit: sqlLimit.toString() || '0'
@@ -138,7 +138,7 @@ export function SearchBooks() {
       person_name: formData.person_name || '',
       person_search_type: formData.personSearch,
       bookclass_cd: formData.bookclass_cd || '',
-      booktype_cd: formData.booktype_cd || ''
+      bookform_cd: formData.bookform_cd || ''
     });
     window.open(`/MyBooks/list_note_range?${params.toString()}`, '_blank', 'width=840,height=600');
   };
@@ -156,7 +156,7 @@ export function SearchBooks() {
       person_name: formData.person_name || '',
       person_search_type: formData.personSearch,
       bookclass_cd: formData.bookclass_cd || '',
-      booktype_cd: formData.booktype_cd || '',
+      bookform_cd: formData.bookform_cd || '',
       display_order: formData.bookOrder || '',
       sqlLimit: sqlLimit.toString() || '0'
     });
@@ -238,11 +238,11 @@ export function SearchBooks() {
       bookclass_cd: e.target.value // ここでbookclass_cdが取得される
     });
   };
-  // 書籍種別マスタ select用
-  const handleBookType = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  // 書籍形態マスタ select用
+  const handleBookForm = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFormData({
       ...formData,
-      booktype_cd: e.target.value // ここでbooktype_cdが取得される
+      bookform_cd: e.target.value // ここでbookform_cdが取得される
     });
   };
 
@@ -432,25 +432,25 @@ export function SearchBooks() {
                 </select>
               </div>
               <div className="flex items-center ml-42">
-                <label htmlFor="booktype" className="inline-block w-16">
-                  書籍種別
+                <label htmlFor="bookform" className="inline-block w-16">
+                  書籍形態
                 </label>
                 <select
-                  id="booktype"
+                  id="bookform"
                   className={styleItems}
                   required
-                  value={formData.booktype_cd}
-                  onChange={handleBookType}
+                  value={formData.bookform_cd}
+                  onChange={handleBookForm}
                 >
                   <option value="">選択してください</option>
-                  {bookTypeMaster.map((item: any) =>
+                  {bookFormMaster.map((item: any) =>
                     item.selectable ? (
-                      <option key={item.booktype_cd} value={item.booktype_cd}>
-                        {item.booktype}
+                      <option key={item.bookform_cd} value={item.bookform_cd}>
+                        {item.bookform}
                       </option>
                     ) : (
-                      <option key={item.booktype_cd} disabled>
-                        {item.booktype}
+                      <option key={item.bookform_cd} disabled>
+                        {item.bookform}
                       </option>
                     )
                   )}

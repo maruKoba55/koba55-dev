@@ -4,7 +4,7 @@ import { AppContextProvider } from '@/context/AppContext';
 import { getSystemConstants } from '@/utils/getSystemConstants';
 import { getBookRole } from '@/utils/getBookRole';
 import { getBookClass } from '@/utils/getBookClass';
-import { getBookType } from '@/utils/getBookType';
+import { getBookForm } from '@/utils/getBookForm';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -33,7 +33,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // マスタ類をすべて取得
   const bookRoleMaster = await getBookRole('all');
   const bookClassMaster = await getBookClass('all');
-  const bookTypeMaster = await getBookType('all');
+  const bookFormMaster = await getBookForm('all');
 
   return (
     <html lang="ja">
@@ -43,7 +43,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           initialConstants={constants ?? []}
           initialBookRoleMaster={bookRoleMaster ?? []}
           initialBookClassMaster={bookClassMaster ?? []}
-          initialBookTypeMaster={bookTypeMaster ?? []}
+          initialBookFormMaster={bookFormMaster ?? []}
         >
           {children}
         </AppContextProvider>

@@ -19,7 +19,7 @@ export default async function ListBookPage({ searchParams }: PageProps) {
     p_person_name: (params.person_name as string) || null,
     p_person_search_type: (params.person_search_type as string) || 'top',
     p_bookclass_cd: (params.bookclass_cd as string) || null,
-    p_booktype_cd: (params.booktype_cd as string) || null,
+    p_bookform_cd: (params.bookform_cd as string) || null,
     p_limit_possess: (params.limit_possess as string) || 'noLimit',
     p_display_order: (params.display_order as string) || 'publish',
     p_select_limit: (params.sqlLimit as string) || '0'
@@ -41,7 +41,7 @@ export default async function ListBookPage({ searchParams }: PageProps) {
       <ListBook
         titleAdd=""
         bookclass_cd={Array.isArray(params.bookclass_cd) ? params.bookclass_cd[0] : (params.bookclass_cd ?? '')}
-        booktype_cd={Array.isArray(params.booktype_cd) ? params.booktype_cd[0] : (params.booktype_cd ?? '')}
+        bookform_cd={Array.isArray(params.bookform_cd) ? params.bookform_cd[0] : (params.bookform_cd ?? '')}
         limit_possess={Array.isArray(params.limit_possess) ? params.limit_possess[0] : (params.limit_possess ?? '')}
         bookIdList={bookIdList}
       />

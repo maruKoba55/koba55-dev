@@ -341,7 +341,7 @@ export default function EditBook({ book }: { book: any }) {
                       className={`flex items-center text-sm gap-2 ${deletePossessions.includes(p.book_possess_id) ? 'opacity-30' : ''}`}
                     >
                       <div className="w-22">
-                        <div className="underline flex flex-col"> {p.booktype_master?.booktype}</div>
+                        <div className="underline flex flex-col"> {p.bookform_master?.bookform}</div>
                         <button
                           type="button"
                           title="実際の削除は、下の［変更を保存］により実行されます。"

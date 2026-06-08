@@ -19,7 +19,7 @@ export default async function ViewBookPage({ searchParams }: PageProps) {
     p_person_name: (params.person_name as string) || null,
     p_person_search_type: (params.person_search_type as string) || 'top',
     p_bookclass_cd: (params.bookclass_cd as string) || null,
-    p_booktype_cd: (params.booktype_cd as string) || null,
+    p_bookform_cd: (params.bookform_cd as string) || null,
     p_limit_possess: (params.limit_possess as string) || 'noLimit',
     p_display_order: (params.display_order as string) || 'publish',
     p_select_limit: (params.sqlLimit as string) || '0'

@@ -1,5 +1,5 @@
 /* 書籍分類マスタ取得（サーバー用）
- * @param 特定の種別（bookclassCd）、すべて取得する場合は 'all' または省略
+ * @param 特定の分類（bookclassCd）、すべて取得する場合は 'all' または省略
  */
 import { supabaseServer } from '@/lib/Server';
 

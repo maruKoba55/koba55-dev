@@ -4,13 +4,13 @@ import React, { createContext, useContext } from 'react';
 import { SystemConstant } from '@/utils/getSystemConstants';
 import { BookRoleMaster } from '@/utils/getBookRole';
 import { BookClassMaster } from '@/utils/getBookClass';
-import { BookTypeMaster } from '@/utils/getBookType';
+import { BookFormMaster } from '@/utils/getBookForm';
 
 interface AppContextType {
   constants: SystemConstant[];
   bookRoleMaster: BookRoleMaster[];
   bookClassMaster: BookClassMaster[];
-  bookTypeMaster: BookTypeMaster[];
+  bookFormMaster: BookFormMaster[];
 }
 const AppContext = createContext<AppContextType | null>(null);
 
@@ -20,13 +20,13 @@ export function AppContextProvider({
   initialConstants,
   initialBookRoleMaster,
   initialBookClassMaster,
-  initialBookTypeMaster
+  initialBookFormMaster
 }: {
   children: React.ReactNode;
   initialConstants: SystemConstant[];
   initialBookRoleMaster: BookRoleMaster[];
   initialBookClassMaster: BookClassMaster[];
-  initialBookTypeMaster: BookTypeMaster[];
+  initialBookFormMaster: BookFormMaster[];
 }) {
   return (
     <AppContext.Provider
@@ -34,7 +34,7 @@ export function AppContextProvider({
         constants: initialConstants,
         bookRoleMaster: initialBookRoleMaster,
         bookClassMaster: initialBookClassMaster,
-        bookTypeMaster: initialBookTypeMaster
+        bookFormMaster: initialBookFormMaster
       }}
     >
       {children}
@@ -75,10 +75,10 @@ export function useBookClassMaster(): BookClassMaster[] {
   }
   return context.bookClassMaster;
 }
-export function useBookTypeMaster(): BookTypeMaster[] {
+export function useBookFormMaster(): BookFormMaster[] {
   const context = useContext(AppContext);
   if (!context) {
-    throw new Error('useBookTypeMaster must be used within a AppContextProvider');
+    throw new Error('useBookFormMaster must be used within a AppContextProvider');
   }
-  return context.bookTypeMaster;
+  return context.bookFormMaster;
 }

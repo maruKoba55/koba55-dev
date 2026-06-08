@@ -6,20 +6,20 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabaseClient } from '@/lib/Client';
 import { X } from 'lucide-react';
 import { CommonButton } from '@/components/ui/button';
-import { useSystemConstant, useBookRoleMaster, useBookClassMaster, useBookTypeMaster } from '@/context/AppContext';
+import { useSystemConstant, useBookRoleMaster, useBookClassMaster, useBookFormMaster } from '@/context/AppContext';
 import { isbnHyphen10 } from '@/utils/isbnHyphen10';
 import { isbnHyphenate } from '@/utils/isbnHyphenate';
 
 export default function ListBook({
   titleAdd,
   bookclass_cd,
-  booktype_cd,
+  bookform_cd,
   limit_possess,
   bookIdList
 }: {
   titleAdd: string;
   bookclass_cd: string;
-  booktype_cd: string;
+  bookform_cd: string;
   limit_possess: string;
   bookIdList: number[];
 }) {
@@ -32,7 +32,7 @@ export default function ListBook({
   const listAlert = (useSystemConstant('listAlert') as number) ?? 0;
   const bookRoleMaster = useBookRoleMaster();
   const bookClassMaster = useBookClassMaster();
-  const bookTypeMaster = useBookTypeMaster();
+  const bookFormMaster = useBookFormMaster();
 
   // 各ボタンの処理
   //［閉じる］
@@ -60,13 +60,13 @@ export default function ListBook({
     }
   }, []); // 第2引数を空配列にすることで「初回のみ」実行
 
-  // 一覧タイトル追加文字（書籍分類／書籍種別／書籍保有）
+  // 一覧タイトル追加文字（書籍分類／書籍形態／書籍保有）
   let titleAdd2 = null;
   if (bookclass_cd) {
     titleAdd2 = bookClassMaster.find((item: any) => item.bookclass_cd === bookclass_cd)?.bookclass || null;
   }
-  if (booktype_cd) {
-    const titleTmp = bookTypeMaster.find((item: any) => item.booktype_cd === booktype_cd)?.booktype || null;
+  if (bookform_cd) {
+    const titleTmp = bookFormMaster.find((item: any) => item.bookform_cd === bookform_cd)?.bookform || null;
     if (titleAdd2) {
       titleAdd2 = titleAdd2 + '／' + titleTmp;
     } else {
@@ -198,7 +198,7 @@ export default function ListBook({
                 {book.book_possess?.map((p: any) => (
                   <li key={p.book_possess_id}>
                     <span className="font-semibold">
-                      {bookTypeMaster.find((item: any) => item.booktype_cd === p.booktype_cd)?.booktype || null}
+                      {bookFormMaster.find((item: any) => item.bookform_cd === p.bookform_cd)?.bookform || null}
                     </span>
                     ： {p.get_date} 取得
                     {p.dispose_date ? `、${p.dispose_date} 処分` : ''}
