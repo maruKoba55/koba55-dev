@@ -146,7 +146,7 @@ export const BookForm = ({
                 />
               </div>
             </div>
-            <div className="mt-1">
+            <div className="flex items-center mt-1">
               <label htmlFor="title" className={`inline-block w-15 ${isReadOnly ? '' : 'font-bold text-orange-500'}`}>
                 書　名
               </label>
@@ -155,13 +155,13 @@ export const BookForm = ({
                 className={styleItems}
                 type="text"
                 required
-                size={94}
+                size={84}
                 readOnly={isReadOnly}
                 value={formData.title}
                 onChange={onChange}
               />
             </div>
-            <div className="mt-1">
+            <div className="flex items-center mt-1">
               <label htmlFor="original_title" className="inline-block w-15">
                 原書名
               </label>
@@ -169,7 +169,7 @@ export const BookForm = ({
                 id="original_title"
                 className={styleItems}
                 type="text"
-                size={94}
+                size={84}
                 readOnly={isReadOnly}
                 value={formData.original_title}
                 onChange={onChange}
@@ -183,7 +183,7 @@ export const BookForm = ({
                 <textarea
                   id="colophon"
                   className={styleItems}
-                  cols={80}
+                  cols={74}
                   rows={4}
                   readOnly={isReadOnly}
                   value={formData.colophon}
@@ -236,7 +236,7 @@ export const BookForm = ({
                 />
               </div>
               <div>
-                <label htmlFor="publish_series_no" className="ml-6">
+                <label htmlFor="publish_series_no" className="ml-5">
                   シリーズ番号
                 </label>
                 <input
@@ -277,7 +277,7 @@ export const BookForm = ({
                   : null}
                 <div className="ml-1">※不詳の場合は 0（zero）</div>
               </div>
-              <div className="flex items-center ml-5">
+              <div className="flex items-center ml-4">
                 <label
                   htmlFor="bookclass_cd"
                   className={`inline-block w-20 ${isReadOnly ? '' : 'font-bold text-orange-500'}`}
@@ -312,14 +312,14 @@ export const BookForm = ({
                 )}
               </div>
             </div>
-            <div className="mt-1">
+            <div className="flex align-top mt-1">
               <label htmlFor="remarks" className="inline-block w-15 align-top">
                 備　考
               </label>
               <textarea
                 id="remarks"
                 className={styleItems}
-                cols={95}
+                cols={84}
                 rows={2}
                 readOnly={isReadOnly}
                 value={formData.remarks}

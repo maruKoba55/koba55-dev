@@ -278,7 +278,7 @@ export function SearchBooks() {
               />
               {formData.isbn13 && !isbnHyphenate(formData.isbn13) ? <div className="text-red-500 ml-1">?</div> : null}
             </div>
-            <div className="mt-2 ml-2">
+            <div className="flex items-center mt-2 ml-2">
               <label htmlFor="title" className="inline-block w-16">
                 書　名
               </label>
@@ -286,7 +286,7 @@ export function SearchBooks() {
                 id="title"
                 className={styleItems}
                 type="text"
-                size={80}
+                size={78}
                 value={formData.title}
                 onChange={handleChange}
               />
@@ -374,7 +374,7 @@ export function SearchBooks() {
                   id="person_name"
                   className={styleItems}
                   type="text"
-                  size={40}
+                  size={42}
                   required
                   value={formData.person_name}
                   onChange={handleChange}
