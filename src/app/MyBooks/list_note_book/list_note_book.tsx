@@ -187,7 +187,7 @@ export default function ListNoteBook() {
                             onChange={(e) => setEditForm({ ...editForm, note: e.target.value })}
                           />
                         </td>
-                        <td className="p-2 flex gap-2">
+                        <td className="flex gap-3 justify-center">
                           <button
                             onClick={() => handleUpdate(note.id)}
                             className="text-green-600 hover:text-green-800"

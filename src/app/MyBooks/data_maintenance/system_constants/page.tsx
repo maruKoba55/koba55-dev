@@ -11,8 +11,8 @@ const defaultConstants = [
     '0',
     'supabaseによる検索制限値（Project Settings ⇒ Data API）。0にすると、書籍検索画面に検索数上限を表示できない場合あり'
   ],
-  ['listAlert', 'numeric', '500', 'リスト形式の警告表示件数。0で警告無し'],
-  ['viewAlert', 'numeric', '500', '閲覧形式の警告表示件数。0で警告無し']
+  ['listAlert', 'numeric', '500', 'リスト形式の検索数警告表示件数。0で警告無し'],
+  ['viewAlert', 'numeric', '500', '個別形式の検索数警告表示件数。0で警告無し']
 ];
 
 export default async function MainteSystemConstantsPage(props: any) {
@@ -42,12 +42,9 @@ export default async function MainteSystemConstantsPage(props: any) {
     }
   }
 
-  // 登録済みのシステム定数を再取得
-  constants = await getSystemConstants('all');
-
   return (
     <div>
-      <MainteSystemConstants constantAdd={constantAdd} dataList={constants ?? []} />
+      <MainteSystemConstants constantAdd={constantAdd} />
     </div>
   );
 }
