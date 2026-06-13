@@ -114,7 +114,16 @@ export default function ListNoteRange() {
     dateTo = `${yyyy}-${mm}-${dd}`;
   }
   // RPCに渡す検索最大件数
-  const dbSearchMax = sqlLimit === 0 || sqlLimit > supabaseMaxRows ? supabaseMaxRows : sqlLimit;
+  let dbSearchMax = 0;
+  if (sqlLimit === 0) {
+    dbSearchMax = supabaseMaxRows;
+  } else if (supabaseMaxRows === 0) {
+    dbSearchMax = sqlLimit;
+  } else if (sqlLimit < supabaseMaxRows) {
+    dbSearchMax = sqlLimit;
+  } else {
+    dbSearchMax = supabaseMaxRows;
+  }
 
   const fetchNotes = async () => {
     setLoading(true);
