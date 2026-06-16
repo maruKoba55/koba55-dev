@@ -14,6 +14,9 @@ export default function MainteSystemConstants({ constantAdd }: { constantAdd: bo
   const user = searchParams.get('user');
   const [data, setData] = useState<SystemConstant[]>([]);
   const [loading, setLoading] = useState(true);
+  // 編集状態の管理
+  const [editingName, setEditingName] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<SystemConstant | null>(null);
 
   // 各ボタンの処理
   // ［閉じる］
@@ -53,7 +56,7 @@ export default function MainteSystemConstants({ constantAdd }: { constantAdd: bo
     }
   };
 
-  // データ一覧の取得
+  // データの取得
   const fetchData = async () => {
     setLoading(true);
     const { data: result, error } = await supabase
@@ -67,14 +70,9 @@ export default function MainteSystemConstants({ constantAdd }: { constantAdd: bo
     }
     setLoading(false);
   };
-
   useEffect(() => {
     fetchData();
   }, []);
-
-  // 編集状態の管理
-  const [editingName, setEditingName] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<SystemConstant | null>(null);
 
   return (
     <div>
@@ -94,7 +92,7 @@ export default function MainteSystemConstants({ constantAdd }: { constantAdd: bo
                   <th className="p-2 border-b">定 数 型</th>
                   <th className="p-2 border-b w-26">定数値</th>
                   <th className="p-2 border-b w-220">備　考</th>
-                  <th className="p-2 border-b text-center w-20">操作</th>
+                  <th className="p-2 border-b text-center w-20">操 作</th>
                 </tr>
               </thead>
               <tbody>
@@ -129,35 +127,37 @@ export default function MainteSystemConstants({ constantAdd }: { constantAdd: bo
                           item.remarks
                         )}
                       </td>
-                      <td className="p-2 flex gap-3 justify-center">
-                        {isEditing ? (
-                          <>
-                            <button
-                              onClick={handleUpdate}
-                              className="text-green-600 hover:text-green-800"
-                              title="編集内容を保存"
-                            >
-                              <Save size={20} />
-                            </button>
-                            <button
-                              onClick={handleEditCancel}
-                              className="text-gray-500 hover:text-gray-700"
-                              title="編集内容を破棄"
-                            >
-                              <X size={20} />
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => handleEdit(item)}
-                              className="text-blue-600 hover:text-blue-800"
-                              title="編集"
-                            >
-                              <Pencil size={18} />
-                            </button>
-                          </>
-                        )}
+                      <td className="p-2 text-center align-middle">
+                        <div className="flex gap-3 justify-center items-center h-full min-h-[40px]">
+                          {isEditing ? (
+                            <>
+                              <button
+                                onClick={handleUpdate}
+                                className="text-green-600 hover:text-green-800"
+                                title="編集内容を保存"
+                              >
+                                <Save size={20} />
+                              </button>
+                              <button
+                                onClick={handleEditCancel}
+                                className="text-gray-500 hover:text-gray-700"
+                                title="編集内容を破棄"
+                              >
+                                <X size={20} />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleEdit(item)}
+                                className="text-blue-600 hover:text-blue-800"
+                                title="編集"
+                              >
+                                <Pencil size={18} />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -174,7 +174,7 @@ export default function MainteSystemConstants({ constantAdd }: { constantAdd: bo
           )}
         </div>
         <div className="flex mt-1 ml-2">
-          ※ 定数値の変更は、トップページを更新したタイミングでシステムに反映されます。
+          ※定数値の変更は、トップページを更新したタイミングでシステムに反映されます。
         </div>
         <div className="flex mt-1 ml-2">※ 【開発者向け】システム定数の規定値は下記コード中に記述</div>
         <div className="flex ml-8">\app\MyBooks\data_maintenance\system_constants\page.tsx</div>

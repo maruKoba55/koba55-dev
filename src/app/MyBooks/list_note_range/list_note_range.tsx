@@ -298,21 +298,23 @@ export default function ListNoteRange() {
                               onChange={(e) => setEditForm({ ...editForm, note: e.target.value })}
                             />
                           </td>
-                          <td className="p-1 flex gap-2 justify-center">
-                            <button
-                              onClick={() => handleUpdate(note.note_id)}
-                              className="text-green-600 hover:text-green-800"
-                              title="編集内容を保存"
-                            >
-                              <Save size={20} />
-                            </button>
-                            <button
-                              onClick={() => setEditingId(null)}
-                              className="text-gray-500 hover:text-gray-700"
-                              title="編集内容を破棄"
-                            >
-                              <X size={20} />
-                            </button>
+                          <td className="p-2 text-center align-middle">
+                            <div className="flex gap-3 justify-center items-center h-full min-h-[40px]">
+                              <button
+                                onClick={() => handleUpdate(note.note_id)}
+                                className="text-green-600 hover:text-green-800"
+                                title="編集内容を保存"
+                              >
+                                <Save size={20} />
+                              </button>
+                              <button
+                                onClick={() => setEditingId(null)}
+                                className="text-gray-500 hover:text-gray-700"
+                                title="編集内容を破棄"
+                              >
+                                <X size={20} />
+                              </button>
+                            </div>
                           </td>
                         </>
                       ) : (
@@ -321,14 +323,16 @@ export default function ListNoteRange() {
                           <td className="p-1">{note.read_st_date}</td>
                           <td className="p-1">{note.read_ed_date}</td>
                           <td className="p-1 whitespace-pre-wrap break-words">{note.note}</td>
-                          <td className="p-1 flex gap-2 justify-center">
-                            <button
-                              onClick={() => handleEdit(note)}
-                              className="text-blue-600 hover:text-blue-800"
-                              title="編集"
-                            >
-                              <Pencil size={18} />
-                            </button>
+                          <td className="p-2 text-center align-middle">
+                            <div className="flex gap-3 justify-center items-center h-full min-h-[40px]">
+                              <button
+                                onClick={() => handleEdit(note)}
+                                className="text-blue-600 hover:text-blue-800"
+                                title="編集"
+                              >
+                                <Pencil size={20} />
+                              </button>
+                            </div>
                           </td>
                         </>
                       )}

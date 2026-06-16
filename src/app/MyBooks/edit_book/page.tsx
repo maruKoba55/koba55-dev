@@ -1,5 +1,5 @@
 import { supabaseServer } from '@/lib/Server';
-import EditBook from '@/app/MyBooks/edit_book/edit_book';
+import EditBook from './edit_book';
 
 // 呼出し元からのbook_id受け取りが2回走行し、1回目の値が2回目でundefinedとなる事象が発生。
 // 1回目の成功したデータのみ保持し、2回目以降のundefinedは無視する。
@@ -32,8 +32,8 @@ export default async function EditBookPage(props: any) {
     )
     .order('role_cd', { referencedTable: 'book_role', ascending: true })
     .order('role_order', { referencedTable: 'book_role', ascending: true })
-    .order('bookform_cd', { referencedTable: 'book_possess', ascending: true })
     .order('get_date', { referencedTable: 'book_possess', ascending: true })
+    .order('bookform_cd', { referencedTable: 'book_possess', ascending: true })
     .eq('book_id', bookId)
     .single();
 

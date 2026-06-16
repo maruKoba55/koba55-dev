@@ -96,6 +96,19 @@ export default function EditBook({ book }: { book: any }) {
       }
     }
     if (deletePossessions.length > 0) {
+      const { count: countNote, error: errorNote } = await supabase
+        .from('book_note')
+        .select('*', { count: 'exact', head: true })
+        .eq('book_id', bookId);
+      if (errorNote) {
+        console.error(errorNote);
+        alert(`ノート存在確認失敗 code=${errorNote.code} : ${errorNote.message}`);
+        return;
+      }
+      if (countNote && countNote > 0 && deletePossessions.length === formData.book_possess.length) {
+        alert('この書籍にはノートが登録されているため、すべての保有情報を削除することはできません。');
+        return;
+      }
       const { error: deletePossessErr } = await supabase
         .from('book_possess')
         .delete()
@@ -159,13 +172,20 @@ export default function EditBook({ book }: { book: any }) {
     } else {
       alert('保存しました。');
     }
-    router.refresh();
+    //    router.refresh();
+    window.location.reload();
   };
 
   // マスタ値取得（カスタムフック）
   const bookClassMaster = useBookClassMaster();
 
-  //［閉じる］ボタンの処理
+  // 各ボタンの処理
+  // ［画面最新化］
+  const handleRefresh = () => {
+    //router.refresh();
+    window.location.reload();
+  };
+  // ［キャンセル］
   const handleClose = () => {
     window.close();
   };
@@ -173,10 +193,6 @@ export default function EditBook({ book }: { book: any }) {
     event.preventDefault(); // ブラウザのデフォルト挙動を防止
     handleClose(); // handlePrev内の「!isNextDisabled」判定が通る時だけ実行される
   });
-  const handleRefresh = () => {
-    //router.refresh();
-    window.location.reload();
-  };
 
   // 入力変更ハンドラ
   // 汎用：チェックボックスの場合はchecked、それ以外はvalueを格納
@@ -460,7 +476,7 @@ export default function EditBook({ book }: { book: any }) {
                 label={
                   <>
                     <RefreshCw size={20} />
-                    画面最新化 (<u>R</u>)
+                    画面最新化
                   </>
                 }
                 variant="outline"

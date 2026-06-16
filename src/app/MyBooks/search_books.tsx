@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { supabaseClient } from '@/lib/Client';
-import { BookCopy, BookSearch, CalendarSearch, Eraser, LogIn, LogOut, Plus, TextSearch, Toolbox } from 'lucide-react';
+import { BookSearch, BookX, CalendarSearch, Eraser, LogIn, LogOut, Plus, TextSearch, Toolbox } from 'lucide-react';
 import { EditProfile } from '@/components/editProfile';
 import { CommonButton } from '@/components/ui/button';
 import { useSystemConstant, useBookRoleMaster, useBookClassMaster, useBookFormMaster } from '@/context/AppContext';
@@ -576,24 +576,26 @@ export function SearchBooks() {
               <span className="text-xl font-bold text-blue-500">読書ノート・未読書籍検索</span>
               <span className="ml-3">※ノートの登録・削除は当該書籍の閲覧画面から</span>
             </div>
-            <div className="flex items-center mt-2 ml-3">
-              <CommonButton
-                label={
-                  <>
-                    <CalendarSearch size={20} />
-                    ノート一覧
-                  </>
-                }
-                variant="blue"
-                onClick={handleNoteSearch}
-              />
+            <div className="flex mt-2 ml-3">
               <div className="flex items-center">
-                ：書籍検索条件（
-                <span className="underline underline-offset-3">書籍保有、表示順を除く</span>
-                ）＋読書開始日でノートを一覧・編集
+                <CommonButton
+                  label={
+                    <>
+                      <CalendarSearch size={20} />
+                      ノート一覧
+                    </>
+                  }
+                  variant="blue"
+                  onClick={handleNoteSearch}
+                />
+                <div className="flex items-center">
+                  ：書籍検索条件（
+                  <span className="underline underline-offset-3">書籍保有、表示順を除く</span>
+                  ）＋読書開始日でノートを一覧・編集
+                </div>
               </div>
             </div>
-            <div className="flex items-center mt-1 ml-36">
+            <div className="flex items-center ml-36">
               <label htmlFor="read_st_date" className="inline-block w-16">
                 読書開始
               </label>
@@ -614,20 +616,26 @@ export function SearchBooks() {
                 onChange={handleChange}
               />
             </div>
-            <div className="flex items-center mt-2 ml-3">
-              <CommonButton
-                label={
-                  <>
-                    <BookCopy size={20} />
-                    未読一覧
-                  </>
-                }
-                variant="blue"
-                onClick={handleUnRead}
-              />
+            <div className="flex mt-2 ml-3">
               <div className="flex items-center">
-                ：書籍検索条件（<span className="underline underline-offset-3">書籍保有を除く</span>
-                ）でノート未存在の書籍を一覧表示
+                <CommonButton
+                  label={
+                    <>
+                      <BookX size={20} />
+                      未読一覧
+                    </>
+                  }
+                  variant="blue"
+                  onClick={handleUnRead}
+                />
+                <div className="flex items-center">：</div>
+                <div className="flex  flex-col justify-center">
+                  <div className="flex">
+                    書籍検索条件（<span className="underline underline-offset-3">書籍保有を除く</span>
+                    ）でノート未存在の書籍を一覧表示
+                  </div>
+                  <div className="flex ml-2">（保有履歴の無い書籍は対象外）</div>
+                </div>
               </div>
             </div>
           </div>
