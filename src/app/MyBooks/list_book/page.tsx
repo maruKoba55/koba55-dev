@@ -9,7 +9,7 @@ export default async function ListBookPage({ searchParams }: PageProps) {
   const supabase = await supabaseServer();
   const params = await searchParams;
 
-  const { data: idListData, error } = await supabase.rpc('search_books_complex', {
+  const { data: idListData, error } = await supabase.rpc('search_books', {
     p_isbn13: (params.isbn13 as string) || null,
     p_title: (params.title as string) || null,
     p_title_search_type: (params.title_search_type as string) || 'top',
@@ -43,6 +43,7 @@ export default async function ListBookPage({ searchParams }: PageProps) {
         bookclass_cd={Array.isArray(params.bookclass_cd) ? params.bookclass_cd[0] : (params.bookclass_cd ?? '')}
         bookform_cd={Array.isArray(params.bookform_cd) ? params.bookform_cd[0] : (params.bookform_cd ?? '')}
         limit_possess={Array.isArray(params.limit_possess) ? params.limit_possess[0] : (params.limit_possess ?? '')}
+        display_order={Array.isArray(params.display_order) ? params.display_order[0] : (params.display_order ?? '')}
         bookIdList={bookIdList}
       />
     </div>
